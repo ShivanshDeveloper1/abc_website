@@ -18,12 +18,8 @@ export default function sitemap() {
       changeFrequency: "yearly",
       priority: 0.5,
     },
-     {
-      url: "https://abcinstitute.org/store",
-      lastModified: new Date(),
-      changeFrequency: "yearly",
-      priority: 0.5,
-    },
+ 
+    
     {
       url: "https://abcinstitute.org/courses",
       lastModified: new Date(),
@@ -56,6 +52,12 @@ export default function sitemap() {
     },
      {
       url: "https://abcinstitute.org/jee/results-2026",
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 0.9,
+    },
+  {
+      url: "https://abcinstitute.org/store",
       lastModified: new Date(),
       changeFrequency: "daily",
       priority: 0.9,
