@@ -19,8 +19,12 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://abcinstitute.org"),
+  alternates: {
+    canonical: "/",
+  },
   title: {
-    default: "ABC Institute ",
+    default: "ABC Institute | Best NEET & JEE Coaching in Saharanpur",
     template: "%s | ABC Institute Saharanpur",
   },
   icons: {
@@ -31,49 +35,35 @@ export const metadata: Metadata = {
   verification: {
     google: "5VbBJUGy_j0l3gOE0Wbf3uLeSThPrUm0rry1oDhSKV8",
   },
-description:
-  "ABC Institute Saharanpur is the best coaching institute for NEET, JEE (IIT), and foundation classes from Class 8 to 12. Join Saharanpur’s top-rated institute for IIT-JEE, NEET preparation, and droppers batch with expert faculty, test series, and online classes.",
-
-keywords: [
-  "best NEET coaching in Saharanpur",
-  "best JEE coaching in Saharanpur",
-  "IIT JEE coaching Saharanpur",
-  "abc institute saharanpur",
-  "NEET coaching institute Saharanpur",
-  "top coaching institute in Saharanpur",
-  "Saharanpur coaching for class 8 to 12",
-  "foundation classes Saharanpur IIT NEET",
-  "droppers batch NEET Saharanpur",
-  "droppers batch JEE Saharanpur",
-  "online coaching classes Saharanpur",
-  "ABC Institute Saharanpur",
-  "Saharanpur IIT preparation institute",
-  "AIIMS preparation coaching Saharanpur",
-  "best institute for science students Saharanpur",
-  "Saharanpur students coaching app"
-],
-  // openGraph : faceebok or whatsapp
-  openGraph: {
-   title: "Best NEET & JEE Coaching in Saharanpur | ABC Institute",
   description:
-    "Join ABC Institute Saharanpur for NEET, JEE (IIT) coaching from Class 8 to 12 and droppers batch. Trusted by students for top results in Saharanpur.",
-    url: "http://abcinstitute.org", // Replace with your real domain
-    siteName: "Saharanpur Education",
+    "ABC Institute Saharanpur is the best coaching institute for NEET, JEE (IIT), and foundation classes from Class 8 to 12. Join Saharanpur’s top-rated institute with expert faculty, test series, and online classes.",
+  keywords: [
+    "best NEET coaching in Saharanpur",
+    "best JEE coaching in Saharanpur",
+    "IIT JEE coaching Saharanpur",
+    "abc institute saharanpur",
+    "NEET coaching institute Saharanpur",
+    "top coaching institute in Saharanpur"
+  ],
+  openGraph: {
+    title: "Best NEET & JEE Coaching in Saharanpur | ABC Institute",
+    description: "Join ABC Institute Saharanpur for NEET, JEE (IIT) coaching from Class 8 to 12 and droppers batch.",
+    url: "https://abcinstitute.org", // Updated to HTTPS
+    siteName: "ABC Institute Saharanpur",
     images: [
       {
         url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "Learning in Saharanpur",
+        alt: "ABC Institute Classroom in Saharanpur",
       },
     ],
-
     locale: "en_IN",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "ABC Institute",
+    title: "ABC Institute Saharanpur",
     description: "Affordable and trusted education for Saharanpur students.",
     images: ["/og-image.jpg"],
   },
