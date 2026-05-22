@@ -16,7 +16,6 @@ const slides = [
   src: "/courosol/DummyBatch.jpeg",
   bgColor: "bg-gradient-to-r from-red-600 to-red-800",
   accentColor: "text-white",
-
 },
   {
     id: 2,
@@ -46,10 +45,8 @@ const slides = [
 
 const Carousel = () => {
   const [current, setCurrent] = useState(0);
-
   const [open, setOpen] = useState(false);
-
-  const router = useRouter()
+  const router = useRouter();
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -59,7 +56,8 @@ const Carousel = () => {
   }, []);
 
   return (
-    <div className=" relative w-full mt-[84px] px-4 md:px-8 py-6 flex justify-center">
+    // Locked outer background to white for both modes
+    <div className="relative w-full bg-white dark:bg-white mt-[84px] px-4 md:px-8 py-6 flex justify-center">
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-3 ">
           {/* Background Blur */}
@@ -73,10 +71,6 @@ const Carousel = () => {
         </div>
       )}
 
-      {/* FIX 1: Adjusted Heights. 
-        h-[650px] for mobile (gives room for text + image stacking)
-        md:h-[450px] for laptop (shorter because they sit side-by-side)
-      */}
       <div className="relative w-full max-w-7xl h-[650px] md:h-[450px] rounded-[2rem] overflow-hidden shadow-2xl">
         {/* Slider Track */}
         <div
@@ -86,9 +80,6 @@ const Carousel = () => {
           {slides.map((slide) => (
             <div
               key={slide.id}
-              /* FIX 2: min-w-full prevents shrinking. 
-                flex-col for mobile, md:flex-row for laptop 
-              */
               className={`min-w-full h-full flex flex-col md:flex-row items-center px-6 pt-12 md:pt-0 md:px-16 ${slide.bgColor} relative`}
             >
               {/* Background Decorations */}
@@ -96,24 +87,23 @@ const Carousel = () => {
               <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -ml-16 -mb-16 pointer-events-none" />
 
               {/* LEFT SIDE: TEXT CONTENT */}
-              {/* FIX 3: Centered text on mobile (items-center, text-center), Left-aligned on laptop (md:items-start, md:text-left) */}
               <div className="w-full md:w-[40%] z-10 flex flex-col items-center text-center md:items-start md:text-left space-y-4">
                 <span
-                  className={`font-bold tracking-wider uppercase text-xs md:text-sm ${slide.accentColor} bg-white/20 px-4 py-1.5 rounded-full`}
+                  className={`font-bold tracking-wider uppercase text-xs md:text-sm ${slide.accentColor} dark:${slide.accentColor} bg-white/20 dark:bg-white/20 px-4 py-1.5 rounded-full`}
                 >
                   {slide.highlight}
                 </span>
 
-                <h2 className="text-3xl md:text-5xl lg:text-6xl font-extrabold text-white leading-tight">
+                <h2 className="text-3xl md:text-5xl lg:text-6xl font-extrabold text-white dark:text-white leading-tight">
                   {slide.title}
                 </h2>
 
-                <p className="text-base md:text-xl text-red-50 font-medium">
+                <p className="text-base md:text-xl text-red-50 dark:text-red-50 font-medium">
                   {slide.subtitle}
                 </p>
 
                 <button
-                  className="mt-4 bg-white text-red-700 px-6 py-3 rounded-xl font-bold hover:bg-gray-100 hover:scale-105 transition-all flex items-center gap-2 shadow-lg"
+                  className="mt-4 bg-white dark:bg-white text-red-700 dark:text-red-700 px-6 py-3 rounded-xl font-bold hover:bg-gray-100 dark:hover:bg-gray-100 hover:scale-105 transition-all flex items-center gap-2 shadow-lg"
                   onClick={() => router.push('/contact')}
                 >
                   {slide.cta}
@@ -122,54 +112,42 @@ const Carousel = () => {
               </div>
 
               {/* PRICE RELATIVE */}
-           {slide.price && (
-  <div className="absolute z-20 top-2 right-6 md:top-10 md:right-10 rotate-[-4deg]">
-    <div className="px-6 py-3 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 shadow-xl">
-      <p className="text-white text-xs font-semibold uppercase tracking-wide opacity-80">
-        Special Price
-      </p>
+              {slide.price && (
+                <div className="absolute z-20 top-2 right-6 md:top-10 md:right-10 rotate-[-4deg]">
+                  <div className="px-6 py-3 rounded-2xl bg-white/20 dark:bg-white/20 backdrop-blur-md border border-white/30 dark:border-white/30 shadow-xl">
+                    <p className="text-white dark:text-white text-xs font-semibold uppercase tracking-wide opacity-80">
+                      Special Price
+                    </p>
 
-      <div className="flex items-end gap-2">
-        <p className="text-white font-extrabold text-xl md:text-2xl leading-none">
-          ₹{slide.price}
-        </p>
+                    <div className="flex items-end gap-2">
+                      <p className="text-white dark:text-white font-extrabold text-xl md:text-2xl leading-none">
+                        ₹{slide.price}
+                      </p>
 
-        <span className="text-white/60 text-sm font-semibold line-through">
-          ₹{parseInt(slide.price) + 5000}
-        </span>
-      </div>
-    </div>
-  </div>
-)}
+                      <span className="text-white/60 dark:text-white/60 text-sm font-semibold line-through">
+                        ₹{parseInt(slide.price) + 5000}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
 
-              {/* RIGHT SIDE: IMAGE */}
-              {/* FIX 4: Image takes up remaining space and scales dynamically instead of fixed hardcoded pixels */}
-              {/* RIGHT SIDE: IMAGE */}
               {/* RIGHT SIDE: IMAGE CONTAINER */}
-              {/* RIGHT SIDE: IMAGE CONTAINER */}
-              {/* RIGHT SIDE: IMAGE CONTAINER */}
-              {/* RIGHT SIDE: IMAGE CONTAINER (The Column) */}
               <div className="w-full md:w-[60%] h-[300px] md:h-full relative flex items-end md:items-center justify-center z-10 p-4 pb-12 md:pb-0">
-                {/* --- THE PICTURE FRAME (The box itself) --- */}
                 <div
                   className="
-    relative 
-    /* MOBILE WIDTH: Controlled by w-full. 
-       To make it 'feel' wider, ensure the parent has less horizontal padding. */
-    w-full 
-    
-    /* LAPTOP WIDTH: We use md:w-[95%] to make it fill almost the whole 60% column. */
-    md:w-[95%] 
-
-    aspect-[16/9] md:aspect-auto 
-    md:h-[85%] /* Increase this from 80% to 85% to make it bigger on laptop */
-    rounded-2xl 
-    border-2 border-white 
-    shadow-2xl 
-    overflow-hidden 
-    bg-black/10
-    translate-y-2 md:translate-y-0 
-  "
+                    relative 
+                    w-full 
+                    md:w-[95%] 
+                    aspect-[16/9] md:aspect-auto 
+                    md:h-[85%] 
+                    rounded-2xl 
+                    border-2 border-white dark:border-white
+                    shadow-2xl 
+                    overflow-hidden 
+                    bg-black/10 dark:bg-black/10
+                    translate-y-2 md:translate-y-0 
+                  "
                 >
                   {/* Background Fill Layer */}
                   <div className="absolute inset-0">
@@ -177,7 +155,7 @@ const Carousel = () => {
                       src={slide.src}
                       alt="blur-bg"
                       fill
-                      className="object-cover scale-110 blur-sm opacity-40"
+                      className="object-cover scale-110 blur-sm opacity-40 dark:opacity-40"
                     />
                   </div>
 
@@ -203,8 +181,8 @@ const Carousel = () => {
               onClick={() => setCurrent(index)}
               className={`h-2 rounded-full transition-all duration-300 ${
                 current === index
-                  ? "w-8 bg-white"
-                  : "w-2 bg-white/40 hover:bg-white/60"
+                  ? "w-8 bg-white dark:bg-white"
+                  : "w-2 bg-white/40 dark:bg-white/40 hover:bg-white/60 dark:hover:bg-white/60"
               }`}
               aria-label={`Go to slide ${index + 1}`}
             />

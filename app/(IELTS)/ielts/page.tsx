@@ -43,10 +43,10 @@ export default function IeltsLandingPage() {
   // Array of 5 placeholders for your images
   const resultImages = [
     "/result/Iilets/results.jpg", // url 1
-    "/result/Iilets/results123.jpg", // url 2
-    "", // url 3
-    "", // url 4
-    "", // url 5
+    "/result/Iilets/results1.jpg", // url 2
+    "/result/Iilets/results2.jpeg", // url 3
+    "/result/Iilets/results3.jpeg", // url 4
+    "/result/Iilets/results4.jpeg", // url 5
   ];
 
   const router = useRouter();

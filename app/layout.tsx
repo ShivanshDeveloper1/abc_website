@@ -38,12 +38,30 @@ export const metadata: Metadata = {
   description:
     "ABC Institute Saharanpur is the best coaching institute for NEET, JEE (IIT), and foundation classes from Class 8 to 12. Join Saharanpur’s top-rated institute with expert faculty, test series, and online classes.",
   keywords: [
-    "best NEET coaching in Saharanpur",
+  "best NEET coaching in Saharanpur",
     "best JEE coaching in Saharanpur",
     "IIT JEE coaching Saharanpur",
     "abc institute saharanpur",
     "NEET coaching institute Saharanpur",
-    "top coaching institute in Saharanpur"
+    "top coaching institute in Saharanpur",
+    "IIT JEE mains advanced Saharanpur",
+    "NEET UG preparation Saharanpur",
+    "best coaching for medical in Saharanpur",
+    "best IIT coaching in Saharanpur",
+    "coaching classes in Saharanpur for NEET",
+    "foundation course class 9 10 Saharanpur",
+    "best institute for competitive exams in Saharanpur",
+
+    // --- High-Volume Broad/Intent Keywords (9 Keywords) ---
+    "best coaching for NEET and JEE",
+    "IIT JEE physics chemistry maths classes",
+    "NEET biology coaching",
+    "dropper batch for NEET preparation",
+    "JEE mains crash course",
+    "pre-foundation classes for IIT JEE",
+    "top rated academy for NEET UG",
+    "engineering entrance exam preparation",
+    "medical entrance exam test series"
   ],
   openGraph: {
     title: "Best NEET & JEE Coaching in Saharanpur | ABC Institute",
