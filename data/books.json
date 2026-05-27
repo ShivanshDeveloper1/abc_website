@@ -16,5 +16,23 @@
     "subject": "Biology",
     "class": "Class 12",
     "image": "/books/RevBioClass12.jpeg"
+  },
+  {
+    "title": "NCERT Revision Workbook",
+    "subject": "Chemistry",
+    "class": "Class 11",
+    "image": "/books/Chemistry11.jpeg"
+  },
+   {
+    "title": "NCERT Revision Workbook",
+    "subject": "Physics",
+    "class": "Class 11",
+    "image": "/books/Physics_class11.jpeg"
+  },
+   {
+    "title": "NCERT Revision Workbook",
+    "subject": "Biology",
+    "class": "Class 11",
+    "image": "/books/BiologyClass11.jpeg"
   }
 ]
