@@ -115,7 +115,7 @@ const TestSeries = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-12">
           {filteredQuizzes.map((item: any) => {
             const startDate = new Date(item.createdAt);
-            const isLive = now >= startDate;
+            const isLive = item.createdAt ? now >= new Date(item.createdAt) : true;
 
             return (
               <div
@@ -147,9 +147,9 @@ const TestSeries = () => {
                     </span>
                   </div>
 
-                  <h3 className="text-xl font-black text-gray-900 mb-2 line-clamp-1 group-hover:text-red-600 transition-colors">
-                    {item.title}
-                  </h3>
+                <h3 className="text-lg font-black text-gray-900 mb-2 leading-snug  group-hover:text-red-600 transition-colors">
+  {item.title}
+</h3>
 
                   <div className="flex items-center text-sm text-gray-500 mb-8">
                     <Clock size={14} className="mr-2 text-red-500/70" />
