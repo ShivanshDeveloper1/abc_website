@@ -85,13 +85,11 @@ export default function Home() {
 
   return (
     <main>
-      <Script
-        id="institute-schema"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLd),
-        }}
-      />
+      <script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+/>
+
 
       <Carousel />
       <HomePage />
