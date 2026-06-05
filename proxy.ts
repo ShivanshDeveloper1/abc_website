@@ -11,6 +11,7 @@ const isPublicRoute = createRouteMatcher([
   "/neet(.*)",
   "/jee(.*)",
   "/login",
+  "/register(.*)",
   "/academic(.*)",
   "/store(.*)",
   "/api/(.*)" // This opens up all API endpoints like /api/quiz and /api/leaderboard

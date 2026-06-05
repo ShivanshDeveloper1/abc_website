@@ -13,16 +13,37 @@ import {
   MoreHorizontal,
   ChevronRight,
   ChevronDown,
+  LogOut,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { UserButton, useUser } from "@clerk/nextjs";
+
+// Firebase Context & Auth Imports (Replacing Clerk completely)
+import { useUser } from "@/context/AuthContext"; 
+import { auth } from "@/lib/firebase";
+import { signOut } from "firebase/auth";
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [mobileResultsOpen, setMobileResultsOpen] = useState(false);
+  const [desktopDropdownOpen, setDesktopDropdownOpen] = useState(false);
+  
   const router = useRouter();
+  
+  // Consuming your custom Firebase Auth Context
   const { user, isLoaded } = useUser();
+
+  const handleSignOut = async () => {
+    try {
+      console.log("🚨 Signing out from Firebase...");
+      await signOut(auth);
+      setOpen(false);
+      setDesktopDropdownOpen(false);
+      router.push("/");
+    } catch (error) {
+      console.error("Error signing out: ", error);
+    }
+  };
 
   const Items = [
     {
@@ -105,18 +126,9 @@ const Navbar = () => {
                             className="absolute top-full left-[-20px] w-60 p-2 bg-white rounded-2xl border border-gray-100 shadow-[0_20px_50px_rgba(0,0,0,0.1)]"
                           >
                             {[
-                              {
-                                label: "NEET Results",
-                                path: "/neet/results-2026",
-                              },
-                              {
-                                label: "JEE Results",
-                                path: "/jee/results-2026",
-                              },
-                              {
-                                label: "Academic",
-                                path: "/academic/results-2026",
-                              },
+                              { label: "NEET Results", path: "/neet/results-2026" },
+                              { label: "JEE Results", path: "/jee/results-2026" },
+                              { label: "Academic", path: "/academic/results-2026" },
                             ].map((subItem) => (
                               <button
                                 key={subItem.label}
@@ -144,7 +156,40 @@ const Navbar = () => {
               {!isLoaded ? (
                 <div className="w-8 h-8 rounded-full bg-gray-100 animate-pulse" />
               ) : user ? (
-                <UserButton afterSignOutUrl="/" />
+                <div className="relative">
+                  {/* Custom Firebase Dropdown Avatar */}
+                  <button
+                    onClick={() => setDesktopDropdownOpen(!desktopDropdownOpen)}
+                    className="flex items-center gap-2 focus:outline-none cursor-pointer"
+                  >
+                    <div className="relative w-10 h-10 overflow-hidden rounded-full border border-gray-200">
+                      <Image
+                        src={user.photoURL || "/logo.jpeg"} 
+                        alt="Profile Pic"
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  </button>
+
+                  {desktopDropdownOpen && (
+                    <>
+                      <div 
+                        className="fixed inset-0 z-40" 
+                        onClick={() => setDesktopDropdownOpen(false)} 
+                      />
+                      <div className="absolute right-0 mt-3 w-48 bg-white border border-gray-100 rounded-xl shadow-xl z-50 p-1">
+                        <button
+                          onClick={handleSignOut}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-50 rounded-xl transition-all cursor-pointer"
+                        >
+                          <LogOut size={16} />
+                          Sign Out
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
               ) : (
                 <button
                   onClick={() => router.push("/login")}
@@ -232,18 +277,9 @@ const Navbar = () => {
                             className="ml-14 mt-1 space-y-1 border-l-2 border-blue-100"
                           >
                             {[
-                              {
-                                label: "NEET Results",
-                                path: "/neet/results-2026",
-                              },
-                              {
-                                label: "JEE Results",
-                                path: "/jee/results-2026",
-                              },
-                              {
-                                label: "Academic",
-                                path: "/academic/results-2026",
-                              },
+                              { label: "NEET Results", path: "/neet/results-2026" },
+                              { label: "JEE Results", path: "/jee/results-2026" },
+                              { label: "Academic", path: "/academic/results-2026" },
                             ].map((sub) => (
                               <button
                                 key={sub.label}
@@ -266,23 +302,36 @@ const Navbar = () => {
             </nav>
           </div>
 
-          {/* Mobile Footer Action - SAME AS DESKTOP LOGIC */}
+          {/* Mobile Footer Action */}
           <div className="p-6 border-t border-gray-50 bg-gray-50/50">
             {!isLoaded ? (
               <div className="w-full h-12 bg-gray-200 animate-pulse rounded-2xl" />
             ) : user ? (
               <div className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100">
                 <div className="flex items-center gap-3">
-                  <UserButton afterSignOutUrl="/" />
+                  <div className="relative w-10 h-10 overflow-hidden rounded-full">
+                    <Image
+                      src={user.photoURL || "/logo.jpeg"}
+                      alt="Profile Avatar"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
                   <div className="flex flex-col">
                     <span className="text-sm font-bold text-gray-900 leading-none">
-                      {user.fullName}
+                      {user.displayName || "Student"}
                     </span>
-                    <span className="text-[10px] text-gray-500 uppercase tracking-tight">
+                    <span className="text-[10px] text-gray-500 uppercase tracking-tight mt-1">
                       Active Account
                     </span>
                   </div>
                 </div>
+                <button 
+                  onClick={handleSignOut} 
+                  className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all cursor-pointer"
+                >
+                  <LogOut size={20} />
+                </button>
               </div>
             ) : (
               <button

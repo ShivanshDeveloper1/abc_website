@@ -10,7 +10,7 @@ export default function TestSeriesPage() {
       {/* Hero Banner */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
         <div className="rounded-2xl bg-gradient-to-r from-red-600 to-red-800 p-8 text-white shadow-lg flex flex-col items-start">
-          <h1 className="text-3xl md:text-4xl font-bold mb-3">Test Series 2025</h1>
+          <h1 className="text-3xl md:text-4xl font-bold mb-3">Test Series 2026</h1>
           <p className="text-red-100 font-medium mb-6 max-w-xl">
             Simulate real exam conditions. Track your progress. Beat the competition.
           </p>
