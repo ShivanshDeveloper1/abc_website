@@ -20,9 +20,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://abcinstitute.org"),
-  alternates: {
-    canonical: "/",
-  },
+  // ❌ REMOVED alternates: { canonical: "/" } 
   title: {
     default: "ABC Institute | Best NEET & JEE Coaching in Saharanpur",
     template: "%s | ABC Institute Saharanpur",
@@ -38,7 +36,7 @@ export const metadata: Metadata = {
   description:
     "ABC Institute Saharanpur is the best coaching institute for NEET, JEE (IIT), and foundation classes from Class 8 to 12. Join Saharanpur’s top-rated institute with expert faculty, test series, and online classes.",
   keywords: [
-  "best NEET coaching in Saharanpur",
+    "best NEET coaching in Saharanpur",
     "best JEE coaching in Saharanpur",
     "IIT JEE coaching Saharanpur",
     "abc institute saharanpur",
@@ -51,8 +49,6 @@ export const metadata: Metadata = {
     "coaching classes in Saharanpur for NEET",
     "foundation course class 9 10 Saharanpur",
     "best institute for competitive exams in Saharanpur",
-
-    // --- High-Volume Broad/Intent Keywords (9 Keywords) ---
     "best coaching for NEET and JEE",
     "IIT JEE physics chemistry maths classes",
     "NEET biology coaching",
@@ -66,7 +62,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Best NEET & JEE Coaching in Saharanpur | ABC Institute",
     description: "Join ABC Institute Saharanpur for NEET, JEE (IIT) coaching from Class 8 to 12 and droppers batch.",
-    url: "https://abcinstitute.org", // Updated to HTTPS
+    // ❌ REMOVED url: "https://abcinstitute.org"
     siteName: "ABC Institute Saharanpur",
     images: [
       {
