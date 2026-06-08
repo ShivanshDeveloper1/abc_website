@@ -14,12 +14,26 @@ const isPublicRoute = createRouteMatcher([
   "/register(.*)",
   "/academic(.*)",
   "/store(.*)",
-  "/api/(.*)" // This opens up all API endpoints like /api/quiz and /api/leaderboard
+  "/api/(.*)" ,// This opens up all API endpoints like /api/quiz and /api/leaderboard
+  "/robots.txt",
+  "/sitemap.xml",
+  "/favicon.ico"
 ]);
 
 export default clerkMiddleware(async (auth, request) => {
+  const { pathname } = request.nextUrl;
+
+  // allow system files always
+  if (
+    pathname === "/robots.txt" ||
+    pathname === "/sitemap.xml" ||
+    pathname === "/favicon.ico"
+  ) {
+    return;
+  }
+
   if (!isPublicRoute(request)) {
-    await auth.protect(); // Only protect dashboard or admin pages
+    await auth.protect();
   }
 });
 
