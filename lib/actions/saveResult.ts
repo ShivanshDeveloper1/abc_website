@@ -1,16 +1,19 @@
 "use server";
 
-import { auth, currentUser } from "@clerk/nextjs/server"; // Import currentUser to get Name/Image
 import { connectDB } from "@/lib/db/db";
 import { QuizResult } from "@/lib/models/QuizResult";
 import { LeaderboardStats } from "@/lib/models/LeaderBoard";
 
-export async function saveTestResultAction(testId: string, resultData: any, testTitle: string) {
+export async function saveTestResultAction(
+  testId: string, 
+  resultData: any, 
+  testTitle: string,
+  userId: string | null,    // Added
+  userProfile: any | null   // Added
+) {
   try {
-    const { userId } = await auth();
-    const user = await currentUser(); // Get the latest name and profile pic from Clerk
-
-    if (!userId || !user) {
+    // If there is no user, it's optional, so we just return gracefully
+    if (!userId || !userProfile) {
       return { success: true, message: "Guest user. Result not saved." };
     }
 
@@ -35,14 +38,13 @@ export async function saveTestResultAction(testId: string, resultData: any, test
       userAnswers: resultData.userAnswers,
     });
 
-    // 3. UPDATE LEADERBOARD (The Magic Part)
-    // findOneAndUpdate with "upsert: true" creates the record if it doesn't exist
+    // 3. UPDATE LEADERBOARD
     await LeaderboardStats.findOneAndUpdate(
       { userId: userId },
       {
         $set: { 
-          name: `${user.firstName} ${user.lastName || ""}`.trim(),
-          imageUrl: user.imageUrl,
+          name: userProfile.fullName || "Anonymous", // Mapping from your AuthProvider
+          imageUrl: userProfile.imageUrl,
           lastAttemptAt: new Date()
         },
         $inc: { 

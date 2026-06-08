@@ -164,7 +164,7 @@ const Navbar = () => {
                   >
                     <div className="relative w-10 h-10 overflow-hidden rounded-full border border-gray-200">
                       <Image
-                        src={user.photoURL || "/logo.jpeg"} 
+                        src={user.imageUrl || "/logo.jpeg"} 
                         alt="Profile Pic"
                         fill
                         className="object-cover"
@@ -311,7 +311,7 @@ const Navbar = () => {
                 <div className="flex items-center gap-3">
                   <div className="relative w-10 h-10 overflow-hidden rounded-full">
                     <Image
-                      src={user.photoURL || "/logo.jpeg"}
+                      src={user.imageUrl || "/logo.jpeg"}
                       alt="Profile Avatar"
                       fill
                       className="object-cover"
@@ -319,7 +319,7 @@ const Navbar = () => {
                   </div>
                   <div className="flex flex-col">
                     <span className="text-sm font-bold text-gray-900 leading-none">
-                      {user.displayName || "Student"}
+                      {user.fullName || "Student"}
                     </span>
                     <span className="text-[10px] text-gray-500 uppercase tracking-tight mt-1">
                       Active Account

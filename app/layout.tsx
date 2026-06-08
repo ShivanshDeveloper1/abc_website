@@ -5,10 +5,11 @@ import Navbar from "@/components/(Homepage)/Navbar";
 import WhatsappFloat from "@/components/Whatsapp";
 import NavbarProvider from "@/components/Provider/NavbarProvider";
 import Footer from "@/components/(Homepage)/Footer";
-import { ClerkProvider } from "@clerk/nextjs";
+
 import FooterProvider from "@/components/Provider/FooterProvider";
 import { cn } from "@/lib/utils";
 import { QuizProvider } from "@/context/QuizContext";
+import { AuthProvider } from "@/context/AuthContext";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
@@ -89,7 +90,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
+    <AuthProvider>
      
     <html lang="en" className={cn("font-sans", geist.variable)}>
      
@@ -104,6 +105,6 @@ export default function RootLayout({
       </body>
      
     </html>
-    </ClerkProvider>
+    </AuthProvider>
   );
 }

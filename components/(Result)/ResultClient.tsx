@@ -1,5 +1,4 @@
 "use client";
-// Added useRef and useMemo to the imports
 import React, { useEffect, useState, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -12,24 +11,22 @@ import {
   Home,
 } from "lucide-react";
 import { useQuiz } from "@/context/QuizContext";
-// Import your specific server action
 import { saveTestResultAction } from "@/lib/actions/saveResult"; 
 
+// 1. Import your Firebase Auth Context
+import { useUser } from "@/context/AuthContext"; 
 
-
-
-
-
-
-const ResultClient = ({ testId, isLoggedIn }) => {
+// You no longer need to pass isLoggedIn as a prop, the component can check it natively
+const ResultClient = ({ testId }) => {
   const router = useRouter();
   const [result, setResult] = useState(null);
   const { quizData } = useQuiz();
   
-  // Use a ref to ensure we only save ONCE per page load
+  // 2. Consume the Firebase User Context
+  const { user, isLoaded } = useUser();
+
   const hasSaved = useRef(false);
 
-  // 1. SAFE DATA EXTRACTION
   const questionsList = useMemo(() => {
     if (Array.isArray(quizData?.questions)) {
       return Array.isArray(quizData.questions[0]) ? quizData.questions[0] : quizData.questions;
@@ -46,47 +43,40 @@ const ResultClient = ({ testId, isLoggedIn }) => {
       const parsedResult = JSON.parse(savedResultString);
       setResult(parsedResult);
 
-      // --- THE LOGIC ENGINE ---
-      // Only trigger if: 1. User is logged in AND 2. We haven't saved yet in this session
-      if (isLoggedIn && !hasSaved.current) {
-        hasSaved.current = true; // Mark as saved immediately to prevent race conditions
+      // 3. Wait for Firebase to load before trying to save
+      if (isLoaded && !hasSaved.current) {
+        hasSaved.current = true; 
         
-       // FIX: Add testTitle here as the 3rd argument!
-      saveTestResultAction(testId, parsedResult, testTitle) 
+        // 4. Pass the Firebase user details directly into the server action
+        saveTestResultAction(
+          testId, 
+          parsedResult, 
+          testTitle, 
+          user?.id || null, // Pass userId
+          user || null      // Pass user profile
+        ) 
         .then((res) => console.log("Database Sync:", res.message))
         .catch((err) => console.error("Database Sync Failed:", err));
-    }
+      }
     } else {
       router.push(`/test-series/${testId}`);
     }
-  }, [testId, router, isLoggedIn, testTitle]);
-
-
-
+  }, [testId, router, isLoaded, user, testTitle]); // Added isLoaded and user to dependency array
 
   
-useEffect(()=> {
-
-// 1. Push a dummy state into the history stack when the result page loads
+  useEffect(()=> {
     window.history.pushState(null, "", window.location.href);
 
-
-    // 2. Create a function to handle the back button press
     const handleBackButton = () => {
-      // 3. Send them to the homepage (or wherever you want)
-      router.push("/test-series"); // Change "/" to your actual homepage route if different
+      router.push("/test-series"); 
     };
-
 
     window.addEventListener("popstate", handleBackButton);
 
-
-    // 5. Cleanup the event listener when the component unmounts
     return () => {
       window.removeEventListener("popstate", handleBackButton);
     };
-
-},[router])
+  }, [router])
 
   if (!result || questionsList.length === 0) {
     return (
