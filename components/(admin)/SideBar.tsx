@@ -25,6 +25,15 @@ const boxes = [
     text: "All Blogs",
     href: "/allBlogs",
   },
+  {
+    icons: <PencilOff size={18} />,
+    text: "Edit Test Series",
+    href: "/edittestSeries",
+  },{
+    icons: <PencilOff size={18} />,
+    text: "Add Bulk Test",
+    href: "/addbulk",
+  },
  
 ];
 
