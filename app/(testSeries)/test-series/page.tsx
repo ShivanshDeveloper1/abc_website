@@ -34,21 +34,17 @@ export default function TestSeriesPage() {
 
       {/* Main Content Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-            <div className="lg:col-span-1">
-            <LeaderBoard />
-          </div>
-          
-          {/* Test Series List (Takes up 2 columns on large screens) */}
-          <div className="lg:col-span-2">
-            <TestSeries />
-          </div>
-
-          {/* Leaderboard Sidebar (Takes up 1 column on large screens) */}
         
 
-        </div>
+          <section>
+    <LeaderBoard />
+  </section>
+          
+          {/* Test Series List (Takes up 2 columns on large screens) */}
+          <section className="mt-16">
+    <TestSeries />
+  </section>
+
       </div>
     </div>
   );
