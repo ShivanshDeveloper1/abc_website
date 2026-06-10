@@ -10,7 +10,8 @@ import {
   Dna, 
   Atom, 
   ClipboardList, 
-  GraduationCap 
+  GraduationCap,
+  Languages // Added for the language badge
 } from "lucide-react";
 import Link from "next/link";
 
@@ -186,62 +187,80 @@ const TestSeries = () => {
       </div>
 
       {/* QUIZ LIST GRID */}
-      <div className="space-y-4">
+      <div className="space-y-6">
         {filteredQuizzes.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-12">
+          // CHANGED: Added lg:grid-cols-3 here so it doesn't get too wide on laptops
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-12">
             {filteredQuizzes.map((item: any) => {
               const isLive = item.createdAt ? now >= new Date(item.createdAt) : true;
+              const quizLanguage = item.language || "English";
 
               return (
                 <div
                   key={item._id}
-                  className={`bg-white rounded-2xl border transition-all duration-300 hover:shadow-md ${
+                  className={`group relative bg-white rounded-2xl border transition-all duration-300 ${
                     isLive
-                      ? "border-gray-200 hover:border-red-200"
-                      : "border-gray-100 bg-gray-50/50 opacity-75 grayscale-[20%]"
+                      ? "border-gray-200/80 hover:border-red-200 hover:-translate-y-1.5 hover:shadow-[0_16px_32px_-4px_rgba(239,68,68,0.06),0_4px_12px_-2px_rgba(0,0,0,0.02)]"
+                      : "border-gray-100 bg-gray-50/40 opacity-80 grayscale-[15%]"
                   }`}
                 >
-                  <div className="p-5">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-2">
-                        <span className="relative flex h-2.5 w-2.5">
+                  <div className="p-6">
+                    {/* Top Status & Badge Bar */}
+                    <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
+                      {/* Left: Live indicator */}
+                      <div className="flex items-center gap-2 bg-gray-50 px-2.5 py-1 rounded-full border border-gray-100">
+                        <span className="relative flex h-2 w-2">
                           {isLive && (
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                           )}
-                          <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isLive ? "bg-emerald-500" : "bg-gray-300"}`}></span>
+                          <span className={`relative inline-flex rounded-full h-2 w-2 ${isLive ? "bg-emerald-500" : "bg-amber-400"}`}></span>
                         </span>
-                        <span className={`text-[11px] font-bold uppercase tracking-widest ${isLive ? "text-emerald-600" : "text-gray-400"}`}>
+                        <span className={`text-[10px] font-black uppercase tracking-wider ${isLive ? "text-emerald-700" : "text-amber-700"}`}>
                           {isLive ? "Live" : "Upcoming"}
                         </span>
                       </div>
                       
-                      <span className="text-[10px] font-bold px-2.5 py-1 rounded-md bg-gray-50 text-gray-600 uppercase border border-gray-200">
-                        {item.examType || "Mock Test"}
-                      </span>
+                      {/* Right: Metadata Badges */}
+                      <div className="flex items-center gap-1.5">
+                        {/* Language Badge */}
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-lg bg-indigo-50/60 text-indigo-700 border border-indigo-100/80 uppercase tracking-wide">
+                          <Languages size={11} className="text-indigo-500" />
+                          {quizLanguage}
+                        </span>
+                        
+                        {/* Exam Type Badge */}
+                        <span className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700 uppercase border border-gray-200/60 tracking-wide">
+                          {item.examType || "Mock Test"}
+                        </span>
+                      </div>
                     </div>
 
-                    <h3 className="text-lg font-bold text-gray-900 mb-3 leading-tight group-hover:text-red-600 transition-colors line-clamp-2">
+                    {/* Title */}
+                    <h3 className="text-lg font-extrabold text-gray-900 mb-3 leading-snug group-hover:text-red-600 transition-colors duration-200 line-clamp-2">
                       {item.title}
                     </h3>
 
-                    <div className="flex items-center text-xs font-medium text-gray-500 mb-6 bg-gray-50 w-fit px-3 py-1.5 rounded-lg border border-gray-100">
+                    {/* Operational Clock Details */}
+                    <div className="flex items-center text-xs font-semibold text-gray-500 mb-6 bg-gray-50/80 w-fit px-3 py-1.5 rounded-lg border border-gray-100/70">
                       <Clock size={14} className="mr-2 text-gray-400" />
                       <span>
-                        {isLive ? "Started: " : "Unlocks: "} <span className="text-gray-700">{formatFullDate(item.createdAt)}</span>
+                        {isLive ? "Started: " : "Unlocks: "} 
+                        <span className="text-gray-800 font-medium">{formatFullDate(item.createdAt)}</span>
                       </span>
                     </div>
 
+                    {/* Dynamic Action Button */}
                     {isLive ? (
                       <Link
                         href={`/test-series/${item._id}`}
-                        className="w-full flex items-center justify-center gap-2 bg-red-900 text-white py-3 rounded-xl hover:bg-red-600 hover:shadow-lg hover:shadow-red-500/25 transition-all duration-300 text-sm font-bold"
+                        className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-red-800 to-red-900 text-white py-3 rounded-xl hover:from-red-600 hover:to-red-700 hover:shadow-lg hover:shadow-red-500/20 transition-all duration-300 text-sm font-bold tracking-wide active:scale-[0.98]"
                       >
                         <Eye size={16} />
                         Start Test Now
                       </Link>
                     ) : (
-                      <div className="w-full flex items-center justify-center gap-2 bg-gray-50 text-gray-400 py-3 rounded-xl text-sm font-bold border border-gray-200 cursor-not-allowed">
-                        <Lock size={16} />
+                      <div className="w-full flex items-center justify-center gap-2 bg-gray-100 text-gray-400 py-3 rounded-xl text-sm font-bold border border-gray-200/60 cursor-not-allowed">
+                        <Lock size={16} className="text-gray-400" />
                         Unlocks {formatShortDate(item.createdAt)}
                       </div>
                     )}
@@ -251,9 +270,12 @@ const TestSeries = () => {
             })}
           </div>
         ) : (
-          <div className="py-20 flex flex-col items-center justify-center bg-gray-50/50 rounded-3xl border-2 border-dashed border-gray-200">
-            <ClipboardList size={40} className="text-gray-300 mb-3" />
-            <p className="text-gray-500 font-medium">No tests found for "{activeFilter}"</p>
+          <div className="py-20 flex flex-col items-center justify-center bg-gray-50/40 rounded-3xl border-2 border-dashed border-gray-200 max-w-xl mx-auto">
+            <div className="p-4 bg-gray-100 rounded-2xl mb-4 text-gray-400 border border-gray-200/40">
+              <ClipboardList size={32} />
+            </div>
+            <h4 className="text-base font-bold text-gray-800 mb-1">No Tests Available</h4>
+            <p className="text-gray-500 text-sm font-medium">We couldn't find any tests matching "{activeFilter}".</p>
           </div>
         )}
       </div>
