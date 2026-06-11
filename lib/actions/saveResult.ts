@@ -19,13 +19,16 @@ export async function saveTestResultAction(
 
     await connectDB();
 
-    // 2. FIRST ATTEMPT CHECK (This is what guarantees only attempt #1 is saved)
+    // 2. FIRST ATTEMPT CHECK
     const existingAttempt = await QuizResult.findOne({ userId, testId }).lean();
     if (existingAttempt) {
-      // Return success: true so the frontend doesn't show an error, 
-      // but we safely skip saving to the database.
       return { success: true, message: "Not the first attempt. Showing UI only." };
     }
+
+    // FIX 3: Convert Array to plain Object so Mongoose Map accepts it
+    const formattedUserAnswers = Array.isArray(resultData.userAnswers)
+      ? Object.fromEntries(resultData.userAnswers.map((ans: any, index: number) => [index.toString(), ans]))
+      : resultData.userAnswers;
 
     // 3. SAVE INDIVIDUAL RESULT
     await QuizResult.create({
@@ -37,8 +40,7 @@ export async function saveTestResultAction(
       correctCount: resultData.correctCount,
       incorrectCount: resultData.incorrectCount,
       unattemptedCount: resultData.unattemptedCount,
-      // Mongoose handles plain JS objects for Map types smoothly
-      userAnswers: resultData.userAnswers, 
+      userAnswers: formattedUserAnswers, // Use the converted object here
     });
 
     // 4. UPDATE LEADERBOARD
@@ -62,13 +64,12 @@ export async function saveTestResultAction(
     return { success: true, message: "Result and Leaderboard updated!" };
     
   } catch (error: any) {
-    // Check for MongoDB Duplicate Key Error (E11000)
-    // This catches race conditions if the user double-clicks submit
     if (error.code === 11000) {
        return { success: true, message: "Duplicate attempt caught by database." };
     }
     
-    console.error("Save Result Error:", error);
+    // Log the actual error to your terminal so you can see if Mongoose is still complaining
+    console.error("Save Result Error Detailed:", error);
     return { success: false, message: "Server error." };
   }
 }

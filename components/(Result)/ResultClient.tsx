@@ -34,6 +34,7 @@ const ResultClient = ({ testId }) => {
   const testTitle = quizData?.title || "Test Result";
 
   // Handle Fetching from Storage and Saving to DB
+ // Handle Fetching from Storage and Saving to DB
   useEffect(() => {
     const savedResultString = sessionStorage.getItem(`testResult-${testId}`);
     
@@ -45,14 +46,15 @@ const ResultClient = ({ testId }) => {
     const parsedResult = JSON.parse(savedResultString);
     setResult(parsedResult);
 
-    // Only attempt save if Firebase is loaded and we haven't saved yet
-    if (isLoaded && !hasSaved.current) {
+    // FIX 1: Ensure `user` actually exists before triggering the save
+    if (isLoaded && user && !hasSaved.current) {
       hasSaved.current = true; 
       
-      const userId = user?.uid || null; 
+      // FIX 2: Check for `user.id` (Clerk) in addition to `user.uid` (Firebase)
+      const userId = user?.id || user?.uid || null; 
       const userProfile = {
-        fullName: user?.fullName || user?.displayName || "Anonymous", // Added fallback for displayName
-        imageUrl: user?.imageUrl || user?.photoURL || "",             // Added fallback for photoURL
+        fullName: user?.fullName || user?.displayName || "Anonymous", 
+        imageUrl: user?.imageUrl || user?.photoURL || "",             
       };
 
       saveTestResultAction(
@@ -66,7 +68,6 @@ const ResultClient = ({ testId }) => {
       .catch((err) => console.error("Database Sync Failed:", err));
     }
   }, [testId, router, isLoaded, user, testTitle]);
-  
   // Prevent Back Navigation to the active quiz
   useEffect(() => {
     window.history.pushState(null, "", window.location.href);
