@@ -9,24 +9,21 @@ import {
   ArrowLeft,
   Info,
   Home,
+  Loader2, // <-- Added for better loading UI
 } from "lucide-react";
 import { useQuiz } from "@/context/QuizContext";
 import { saveTestResultAction } from "@/lib/actions/saveResult"; 
-
-// 1. Import your Firebase Auth Context
 import { useUser } from "@/context/AuthContext"; 
 
-// You no longer need to pass isLoggedIn as a prop, the component can check it natively
 const ResultClient = ({ testId }) => {
   const router = useRouter();
   const [result, setResult] = useState(null);
   const { quizData } = useQuiz();
   
-  // 2. Consume the Firebase User Context
   const { user, isLoaded } = useUser();
-
   const hasSaved = useRef(false);
 
+  // Safely memoize the questions list
   const questionsList = useMemo(() => {
     if (Array.isArray(quizData?.questions)) {
       return Array.isArray(quizData.questions[0]) ? quizData.questions[0] : quizData.questions;
@@ -36,52 +33,59 @@ const ResultClient = ({ testId }) => {
 
   const testTitle = quizData?.title || "Test Result";
 
+  // Handle Fetching from Storage and Saving to DB
   useEffect(() => {
     const savedResultString = sessionStorage.getItem(`testResult-${testId}`);
     
-    if (savedResultString) {
-      const parsedResult = JSON.parse(savedResultString);
-      setResult(parsedResult);
-
-      // 3. Wait for Firebase to load before trying to save
-      if (isLoaded && !hasSaved.current) {
-        hasSaved.current = true; 
-        
-        // 4. Pass the Firebase user details directly into the server action
-        saveTestResultAction(
-          testId, 
-          parsedResult, 
-          testTitle, 
-          user?.id || null, // Pass userId
-          user || null      // Pass user profile
-        ) 
-        .then((res) => console.log("Database Sync:", res.message))
-        .catch((err) => console.error("Database Sync Failed:", err));
-      }
-    } else {
-      router.push(`/test-series/${testId}`);
+    if (!savedResultString) {
+      router.replace(`/test-series/${testId}`);
+      return;
     }
-  }, [testId, router, isLoaded, user, testTitle]); // Added isLoaded and user to dependency array
 
+    const parsedResult = JSON.parse(savedResultString);
+    setResult(parsedResult);
+
+    // Only attempt save if Firebase is loaded and we haven't saved yet
+    if (isLoaded && !hasSaved.current) {
+      hasSaved.current = true; 
+      
+      const userId = user?.uid || null; 
+      const userProfile = {
+        fullName: user?.fullName || user?.displayName || "Anonymous", // Added fallback for displayName
+        imageUrl: user?.imageUrl || user?.photoURL || "",             // Added fallback for photoURL
+      };
+
+      saveTestResultAction(
+        testId, 
+        parsedResult, 
+        testTitle, 
+        userId, 
+        userProfile 
+      ) 
+      .then((res) => console.log("Database Sync:", res.message))
+      .catch((err) => console.error("Database Sync Failed:", err));
+    }
+  }, [testId, router, isLoaded, user, testTitle]);
   
-  useEffect(()=> {
+  // Prevent Back Navigation to the active quiz
+  useEffect(() => {
     window.history.pushState(null, "", window.location.href);
-
     const handleBackButton = () => {
-      router.push("/test-series"); 
+      router.replace("/test-series"); // Use replace instead of push for cleaner history
     };
 
     window.addEventListener("popstate", handleBackButton);
+    return () => window.removeEventListener("popstate", handleBackButton);
+  }, [router]);
 
-    return () => {
-      window.removeEventListener("popstate", handleBackButton);
-    };
-  }, [router])
-
+  // Improved Loading State
   if (!result || questionsList.length === 0) {
     return (
-      <div className="p-20 text-center font-bold text-slate-500">
-        Generating Analysis...
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
+        <div className="flex flex-col items-center space-y-3">
+          <Loader2 className="animate-spin text-indigo-600" size={40} />
+          <p className="text-slate-500 font-bold tracking-wide">Generating Analysis...</p>
+        </div>
       </div>
     );
   }
@@ -160,18 +164,23 @@ const ResultClient = ({ testId }) => {
                   </p>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
-                    {q.options?.map((opt, i) => {
+                    {/* SAFE FALLBACK added to q.options mapping */}
+                    {(q.options || []).map((opt, i) => {
                       const isThisCorrect = i === correctAnswer;
                       const isThisUserPick = i === userPick;
 
-                      let borderStyle = "border-slate-100";
+                      let borderStyle = "border-slate-100 hover:bg-slate-50/80";
                       let bgStyle = "bg-slate-50/50";
-                      if (isThisCorrect) borderStyle = "border-green-500 bg-green-50";
-                      else if (isThisUserPick && !isCorrect) borderStyle = "border-red-200 bg-red-50";
+                      
+                      if (isThisCorrect) {
+                        borderStyle = "border-green-500 bg-green-50";
+                      } else if (isThisUserPick && !isCorrect) {
+                        borderStyle = "border-red-200 bg-red-50";
+                      }
 
                       return (
-                        <div key={i} className={`p-4 rounded-xl border-2 flex items-center gap-3 ${borderStyle} ${bgStyle}`}>
-                          <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${isThisCorrect ? "bg-green-500 text-white" : "bg-slate-200 text-slate-500"}`}>
+                        <div key={i} className={`p-4 rounded-xl border-2 flex items-center gap-3 transition-colors ${borderStyle} ${bgStyle}`}>
+                          <div className={`h-6 w-6 shrink-0 rounded-full flex items-center justify-center text-xs font-bold ${isThisCorrect ? "bg-green-500 text-white" : "bg-slate-200 text-slate-500"}`}>
                             {String.fromCharCode(65 + i)}
                           </div>
                           <span className={`text-sm font-medium ${isThisCorrect ? "text-green-800" : "text-slate-600"}`}>
@@ -210,7 +219,7 @@ const ResultClient = ({ testId }) => {
 };
 
 const StatCard = ({ icon: Icon, color, label, val }) => (
-  <div className="bg-white p-6 rounded-2xl border border-slate-200 flex items-center gap-4 shadow-sm">
+  <div className="bg-white p-6 rounded-2xl border border-slate-200 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
     <div className={`h-12 w-12 rounded-xl bg-slate-50 flex items-center justify-center ${color}`}>
       <Icon size={24} />
     </div>

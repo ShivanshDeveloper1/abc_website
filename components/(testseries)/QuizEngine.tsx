@@ -6,31 +6,36 @@ import { useQuiz } from "@/context/QuizContext";
 
 const QuizEngine = () => {
   const { quizData, loading } = useQuiz();
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [selectedAnswers, setSelectedAnswers] = useState({});
   const router = useRouter();
 
-  // 1. SAFE DATA EXTRACTION: Accessing the nested array from your DB structure   
-  let questionsList = [];
+  // 1. Load saved progress from localStorage on initial render
+  const [selectedAnswers, setSelectedAnswers] = useState(() => {
+    if (typeof window !== "undefined" && quizData?._id) {
+      const saved = localStorage.getItem(`quiz-progress-${quizData._id}`);
+      if (saved) return JSON.parse(saved);
+    }
+    return {};
+  });
 
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  let questionsList = [];
   if (Array.isArray(quizData?.questions)) {
     if (Array.isArray(quizData.questions[0])) {
-      // Case: nested array (your current DB)
       questionsList = quizData.questions[0];
     } else {
-      // Case: already flat array
       questionsList = quizData.questions;
     }
   }
   const totalQuestions = questionsList.length;
-
   const totalTimeInSeconds = (quizData?.duration || totalQuestions) * 60;
+  
   const [timeLeft, setTimeLeft] = useState(totalTimeInSeconds);
-
   const latestAnswers = useRef(selectedAnswers);
   const hasSubmittedRef = useRef(false);
   const currentIndexRef = useRef(currentIndex);
 
+  // Keep refs updated for background tasks
   useEffect(() => {
     latestAnswers.current = selectedAnswers;
   }, [selectedAnswers]);
@@ -39,7 +44,20 @@ const QuizEngine = () => {
     currentIndexRef.current = currentIndex;
   }, [currentIndex]);
 
-  // 2. SAFETY GUARD: Check if data exists or list is empty before rendering
+  // 2. Auto-save every 15 seconds
+  useEffect(() => {
+    if (!quizData?._id) return;
+    const saveInterval = setInterval(() => {
+      if (Object.keys(latestAnswers.current).length > 0) {
+        localStorage.setItem(
+          `quiz-progress-${quizData._id}`,
+          JSON.stringify(latestAnswers.current)
+        );
+      }
+    }, 15000);
+    return () => clearInterval(saveInterval);
+  }, [quizData?._id]);
+
   if (loading || !quizData || questionsList.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center font-bold text-gray-500">
@@ -48,18 +66,17 @@ const QuizEngine = () => {
     );
   }
 
-  // Define currentQuestion AFTER the safety guard
   const currentQuestion = questionsList[currentIndex];
   const progress = ((currentIndex + 1) / totalQuestions) * 100;
 
-  const formatTime = (seconds) => {
+  const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return mins > 0 ? `${mins} min ${secs < 10 ? `0${secs}` : secs} sec` : `${secs} sec`;
   };
 
-  const handleOptionSelect = (optionIndex) => {
-    setSelectedAnswers((prev) => ({
+  const handleOptionSelect = (optionIndex: number) => {
+    setSelectedAnswers((prev: any) => ({
       ...prev,
       [currentIndex]: optionIndex,
     }));
@@ -75,14 +92,13 @@ const QuizEngine = () => {
 
   const handleSubmitTest = (forceSubmit = false) => {
     if (hasSubmittedRef.current) return;
-
     hasSubmittedRef.current = true;
     const answersToProcess = latestAnswers.current;
 
     let correctCount = 0;
     let incorrectCount = 0;
 
-    questionsList.forEach((question, index) => {
+    questionsList.forEach((question: any, index: number) => {
       const selectedOption = answersToProcess[index];
       if (selectedOption !== undefined) {
         if (selectedOption === question.correct_answer) {
@@ -106,7 +122,9 @@ const QuizEngine = () => {
       userAnswers: answersToProcess,
     };
 
-    // Save purely to sessionStorage and navigate
+    // 3. Clear the saved progress so they can retake it cleanly later
+    localStorage.removeItem(`quiz-progress-${quizData._id}`);
+    
     sessionStorage.setItem(`testResult-${quizData._id}`, JSON.stringify(resultData));
     router.replace(`/test-series/${quizData._id}/result`);
   };
@@ -132,7 +150,7 @@ const QuizEngine = () => {
       }
     };
 
-    const handleBeforeUnload = (e) => {
+    const handleBeforeUnload = (e: any) => {
       e.preventDefault();
       e.returnValue = "Are you sure you want to leave?";
     };
@@ -156,6 +174,7 @@ const QuizEngine = () => {
   }, []);
 
   return (
+    // Your UI rendering remains exactly the same here
     <section
       className="min-h-screen bg-gradient-to-br mt-2 from-slate-50 to-slate-100 pt-20 pb-12 px-4 sm:px-6 lg:px-8 select-none"
       onContextMenu={(e) => e.preventDefault()}
@@ -193,7 +212,7 @@ const QuizEngine = () => {
               </div>
 
               <div className="grid grid-cols-1 gap-3 sm:gap-4 mb-10 flex-1">
-                {currentQuestion?.options?.map((opt, i) => {
+                {currentQuestion?.options?.map((opt: string, i: number) => {
                   const isSelected = selectedAnswers[currentIndex] === i;
                   return (
                     <button
@@ -259,7 +278,7 @@ const QuizEngine = () => {
           <div className="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-200 sticky top-6 lg:top-28">
             <h3 className="font-bold text-slate-800 mb-4">Question Palette</h3>
             <div className="grid grid-cols-5 gap-2">
-              {questionsList?.map((_, i) => (
+              {questionsList?.map((_: any, i: number) => (
                 <button
                   key={i}
                   onClick={() => setCurrentIndex(i)}
