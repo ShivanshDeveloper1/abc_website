@@ -189,7 +189,6 @@ const QuizEngine = () => {
                 style={{ width: `${progress}%` }}
               />
             </div>
-
             <div className="p-5 sm:p-8 md:p-10 flex-1 flex flex-col">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
                 <span className="text-xs font-bold uppercase tracking-widest text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-full border border-indigo-100">
@@ -209,8 +208,18 @@ const QuizEngine = () => {
                   </span>
                   {currentQuestion?.question_text}
                 </h2>
-              </div>
 
+                {/* NEW: Display the image if it exists for this question */}
+    {currentQuestion?.imageUrl && (
+      <div className="mt-6 flex justify-center">
+        <img 
+          src={currentQuestion.imageUrl} 
+          alt={`Question ${currentIndex + 1} illustration`} 
+          className="max-h-64 w-auto rounded-xl shadow-sm border border-slate-200 object-contain"
+        />
+      </div>
+    )}
+     </div>
               <div className="grid grid-cols-1 gap-3 sm:gap-4 mb-10 flex-1">
                 {currentQuestion?.options?.map((opt: string, i: number) => {
                   const isSelected = selectedAnswers[currentIndex] === i;

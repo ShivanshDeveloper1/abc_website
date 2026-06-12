@@ -9,7 +9,6 @@ const AdminQuizEditor = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // Fetch only titles on mount
   useEffect(() => {
     fetch('/api/admin/edit-quizzes')
       .then(res => res.json())
@@ -19,7 +18,6 @@ const AdminQuizEditor = () => {
       });
   }, []);
 
-  // Fetch full quiz data when a title is clicked
   const handleSelectQuiz = async (id) => {
     setLoading(true);
     const res = await fetch(`/api/admin/edit-quizzes/${id}`);
@@ -28,21 +26,18 @@ const AdminQuizEditor = () => {
     setLoading(false);
   };
 
-  // Handle changes to a specific question
   const handleQuestionChange = (index, field, value) => {
     const updatedQuiz = { ...selectedQuiz };
     updatedQuiz.questions[index][field] = value;
     setSelectedQuiz(updatedQuiz);
   };
 
-  // Handle changes to an option within a specific question
   const handleOptionChange = (qIndex, optIndex, value) => {
     const updatedQuiz = { ...selectedQuiz };
     updatedQuiz.questions[qIndex].options[optIndex] = value;
     setSelectedQuiz(updatedQuiz);
   };
 
-  // Save the entire updated quiz back to the database
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -56,6 +51,35 @@ const AdminQuizEditor = () => {
       alert('Failed to save.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  // FIXED: Added Cloudinary API URL and fixed the upload_preset key
+  const handleImageUpload = async (qIndex, file) => {
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+    // 'ABC' was wrong here. It MUST be named 'upload_preset'
+    formData.append('upload_preset', 'test_series-image'); 
+
+    try {
+      // FIXED: Put the correct Cloudinary URL here! 
+      // Replace YOUR_CLOUD_NAME with your actual Cloudinary cloud name (e.g., 'dxy123abc')
+      const res = await fetch('https://api.cloudinary.com/v1-1/dkfe8naf5/image/upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await res.json();
+
+      if (data.secure_url) {
+        handleQuestionChange(qIndex, 'imageUrl', data.secure_url);
+        alert('Image uploaded successfully!');
+      }    
+    } catch (error) {
+      console.log("Upload error", error);
+      alert('Failed to upload image');
     }
   };
 
@@ -108,8 +132,10 @@ const AdminQuizEditor = () => {
 
             {/* Questions Editor */}
             <div className="space-y-6">
+              {/* NOTE: Everything regarding questions must go inside this map function! */}
               {selectedQuiz.questions.map((question, qIndex) => (
                 <div key={question._id || qIndex} className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                  
                   <div className="flex items-center gap-4 mb-4">
                     <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-bold">
                       Q{qIndex + 1}
@@ -123,17 +149,43 @@ const AdminQuizEditor = () => {
                     />
                   </div>
 
+                  {/* FIXED: The text area is safely inside the loop now */}
                   <textarea
                     value={question.question_text}
                     onChange={(e) => handleQuestionChange(qIndex, 'question_text', e.target.value)}
                     className="w-full p-3 border border-gray-200 rounded-lg mb-4 focus:outline-red-500"
                     rows={3}
+                    placeholder="Enter question text..."
                   />
+
+                  {/* FIXED: The Image Upload is now safely inside the loop for each specific question */}
+                  <div className="mb-4 p-4 border border-dashed border-gray-300 rounded-lg bg-gray-50 flex flex-col gap-2">
+                    <label className="text-sm font-bold text-gray-700">Attach Image (Optional)</label>
+                    <div className="flex items-center gap-4">
+                      <input 
+                        type="file" 
+                        accept="image/*"
+                        onChange={(e) => handleImageUpload(qIndex, e.target.files[0])}
+                        className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100"
+                      />
+                    </div>
+                    {/* Show a small preview if an image is already uploaded */}
+                    {question.imageUrl && (
+                      <div className="mt-2">
+                        <img src={question.imageUrl} alt="Preview" className="h-24 w-auto rounded border" />
+                        <button 
+                          onClick={() => handleQuestionChange(qIndex, 'imageUrl', '')}
+                          className="text-xs text-red-500 mt-1 hover:underline cursor-pointer"
+                        >
+                          Remove Image
+                        </button>
+                      </div>
+                    )}
+                  </div>
 
                   <div className="grid grid-cols-2 gap-4 mb-4">
                     {question.options.map((opt, optIndex) => (
                       <div key={optIndex} className="flex items-center gap-3">
-                        {/* Radio to select the correct answer */}
                         <input 
                           type="radio" 
                           name={`correct-${qIndex}`}
