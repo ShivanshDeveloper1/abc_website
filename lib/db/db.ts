@@ -2,12 +2,11 @@ import mongoose from "mongoose";
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
-// 🔴 1. Check if URI exists
 if (!MONGODB_URI) {
-  throw new Error("❌ Please define MONGODB_URI in .env.local");
+  throw new Error("❌ Please define MONGODB_URI in your environment variables.");
 }
 
-// 🔴 2. Global cache (Next.js hot reload fix)
+// 1. Properly target the global object
 let cached = global.mongoose;
 
 if (!cached) {
@@ -17,31 +16,35 @@ if (!cached) {
   };
 }
 
-// 🔴 3. Main connection function
 export async function connectDB() {
-  // If already connected → reuse
   if (cached.conn) {
     return cached.conn;
   }
 
-  // If no promise → create one
   if (!cached.promise) {
-    cached.promise = (async () => {
-      try {
-        const conn = await mongoose.connect(MONGODB_URI, {
-          bufferCommands: false,
-        });
+    const opts = {
+      bufferCommands: false,
+    };
 
-        console.log("MongoDB Connected");
-        return conn;
-      } catch (error) {
+    // 2. We assign the promise chain directly
+    cached.promise = mongoose.connect(MONGODB_URI, opts)
+      .then((mongooseInstance) => {
+        console.log("🚀 MongoDB Connected Successfully");
+        return mongooseInstance;
+      })
+      .catch((error) => {
         console.error("❌ MongoDB Connection Error:", error);
+        cached.promise = null; // 🔴 CRITICAL: Clear cache on failure so next attempt tries again
         throw error;
-      }
-    })();
+      });
   }
 
-  // Wait for connection
-  cached.conn = await cached.promise;
+  try {
+    cached.conn = await cached.promise;
+  } catch (e) {
+    cached.promise = null; // Double-guard against a poisoned promise cache
+    throw e;
+  }
+
   return cached.conn;
 }

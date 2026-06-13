@@ -14,23 +14,24 @@ export async function saveTestResultAction(
   try {
     // 1. Guest Check
     if (!userId || !userProfile) {
-      return { success: true, message: "Guest user. Result not saved." };
+      return { success: true, isFirstAttempt: false, message: "Guest user. Result not saved." };
     }
 
     await connectDB();
 
-    // 2. FIRST ATTEMPT CHECK
+    // 2. FIRST ATTEMPT CHECK (Just reading, not saving)
     const existingAttempt = await QuizResult.findOne({ userId, testId }).lean();
     if (existingAttempt) {
-      return { success: true, message: "Not the first attempt. Showing UI only." };
+      // FIX: Added `isFirstAttempt: false`
+      return { success: true, isFirstAttempt: false, message: "Not the first attempt. Showing UI only." };
     }
 
-    // FIX 3: Convert Array to plain Object so Mongoose Map accepts it
+    // 3. Convert Array to plain Object so Mongoose Map accepts it
     const formattedUserAnswers = Array.isArray(resultData.userAnswers)
       ? Object.fromEntries(resultData.userAnswers.map((ans: any, index: number) => [index.toString(), ans]))
       : resultData.userAnswers;
 
-    // 3. SAVE INDIVIDUAL RESULT
+    // 4. SAVE INDIVIDUAL RESULT (This only runs if it IS the first attempt)
     await QuizResult.create({
       userId,
       testId,
@@ -40,10 +41,10 @@ export async function saveTestResultAction(
       correctCount: resultData.correctCount,
       incorrectCount: resultData.incorrectCount,
       unattemptedCount: resultData.unattemptedCount,
-      userAnswers: formattedUserAnswers, // Use the converted object here
+      userAnswers: formattedUserAnswers, 
     });
 
-    // 4. UPDATE LEADERBOARD
+    // 5. UPDATE LEADERBOARD
     await LeaderboardStats.findOneAndUpdate(
       { userId: userId },
       {
@@ -61,14 +62,15 @@ export async function saveTestResultAction(
       { upsert: true, new: true }
     );
 
-    return { success: true, message: "Result and Leaderboard updated!" };
+    // FIX: Added `isFirstAttempt: true`
+    return { success: true, isFirstAttempt: true, message: "Result and Leaderboard updated!" };
     
   } catch (error: any) {
     if (error.code === 11000) {
-       return { success: true, message: "Duplicate attempt caught by database." };
+       // FIX: Added `isFirstAttempt: false`
+       return { success: true, isFirstAttempt: false, message: "Duplicate attempt caught by database." };
     }
     
-    // Log the actual error to your terminal so you can see if Mongoose is still complaining
     console.error("Save Result Error Detailed:", error);
     return { success: false, message: "Server error." };
   }

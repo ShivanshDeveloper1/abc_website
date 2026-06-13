@@ -45,10 +45,12 @@ const QuizEngine = () => {
   }, [currentIndex]);
 
   // 2. Auto-save every 15 seconds
+// 2. Auto-save every 15 seconds
   useEffect(() => {
     if (!quizData?._id) return;
     const saveInterval = setInterval(() => {
-      if (Object.keys(latestAnswers.current).length > 0) {
+      // FIX: Added !hasSubmittedRef.current to prevent zombie saves
+      if (Object.keys(latestAnswers.current).length > 0 && !hasSubmittedRef.current) {
         localStorage.setItem(
           `quiz-progress-${quizData._id}`,
           JSON.stringify(latestAnswers.current)
@@ -90,7 +92,7 @@ const QuizEngine = () => {
     if (currentIndex > 0) setCurrentIndex(currentIndex - 1);
   };
 
-  const handleSubmitTest = (forceSubmit = false) => {
+const handleSubmitTest = (forceSubmit = false) => {
     if (hasSubmittedRef.current) return;
     hasSubmittedRef.current = true;
     const answersToProcess = latestAnswers.current;
@@ -122,11 +124,17 @@ const QuizEngine = () => {
       userAnswers: answersToProcess,
     };
 
+    // FIX 1: Wipe the ref clean so background tasks have nothing to save
+    latestAnswers.current = {}; 
+    
     // 3. Clear the saved progress so they can retake it cleanly later
     localStorage.removeItem(`quiz-progress-${quizData._id}`);
     
     sessionStorage.setItem(`testResult-${quizData._id}`, JSON.stringify(resultData));
-    router.replace(`/test-series/${quizData._id}/result`);
+    
+    // FIX 2: Bust the Next.js router cache by adding a unique timestamp query parameter
+    // This guarantees your ResultClient will remount and trigger the DB POST request!
+    router.replace(`/test-series/${quizData._id}/result?attempt=${Date.now()}`);
   };
 
   useEffect(() => {

@@ -9,17 +9,21 @@ import {
   ArrowLeft,
   Info,
   Home,
-  Loader2, // <-- Added for better loading UI
+  Loader2,
 } from "lucide-react";
 import { useQuiz } from "@/context/QuizContext";
 import { saveTestResultAction } from "@/lib/actions/saveResult"; 
 import { useUser } from "@/context/AuthContext"; 
+import ResultPopup from "./ResultPopup"; // <-- Import the new popup component
 
 const ResultClient = ({ testId }) => {
   const router = useRouter();
   const [result, setResult] = useState(null);
-  const { quizData } = useQuiz();
   
+  // State for popup visibility and variant type
+  const [popupConfig, setPopupConfig] = useState({ show: false, type: null }); 
+
+  const { quizData } = useQuiz();
   const { user, isLoaded } = useUser();
   const hasSaved = useRef(false);
 
@@ -34,7 +38,7 @@ const ResultClient = ({ testId }) => {
   const testTitle = quizData?.title || "Test Result";
 
   // Handle Fetching from Storage and Saving to DB
- // Handle Fetching from Storage and Saving to DB
+  // Handle Fetching from Storage and Saving to DB
   useEffect(() => {
     const savedResultString = sessionStorage.getItem(`testResult-${testId}`);
     
@@ -46,11 +50,9 @@ const ResultClient = ({ testId }) => {
     const parsedResult = JSON.parse(savedResultString);
     setResult(parsedResult);
 
-    // FIX 1: Ensure `user` actually exists before triggering the save
     if (isLoaded && user && !hasSaved.current) {
       hasSaved.current = true; 
       
-      // FIX 2: Check for `user.id` (Clerk) in addition to `user.uid` (Firebase)
       const userId = user?.id || user?.uid || null; 
       const userProfile = {
         fullName: user?.fullName || user?.displayName || "Anonymous", 
@@ -64,15 +66,28 @@ const ResultClient = ({ testId }) => {
         userId, 
         userProfile 
       ) 
-      .then((res) => console.log("Database Sync:", res.message))
+      .then((res) => {
+        console.log("Database Sync:", res);
+        
+        // PERFECTLY MATCHED LOGIC:
+        if (res?.isFirstAttempt === false) {
+          // It's the second time. Shows the Practice popup. 
+          // (Change this to `show: false` if you want it to be completely silent)
+          setPopupConfig({ show: true, type: "practice" }); 
+        } else if (res?.isFirstAttempt === true) {
+          // It's the first time. Shows the Saved popup.
+          setPopupConfig({ show: true, type: "saved" });
+        }
+      })
       .catch((err) => console.error("Database Sync Failed:", err));
     }
   }, [testId, router, isLoaded, user, testTitle]);
+
   // Prevent Back Navigation to the active quiz
   useEffect(() => {
     window.history.pushState(null, "", window.location.href);
     const handleBackButton = () => {
-      router.replace("/test-series"); // Use replace instead of push for cleaner history
+      router.replace("/test-series"); 
     };
 
     window.addEventListener("popstate", handleBackButton);
@@ -92,7 +107,7 @@ const ResultClient = ({ testId }) => {
   }
 
   return (
-    <section className="min-h-screen bg-slate-50 pt-24 pb-20 px-4 md:px-8">
+    <section className="min-h-screen bg-slate-50 pt-24 pb-20 px-4 md:px-8 relative overflow-hidden">
       <div className="max-w-4xl mx-auto">
         {/* Back Button */}
         <button
@@ -165,7 +180,6 @@ const ResultClient = ({ testId }) => {
                   </p>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
-                    {/* SAFE FALLBACK added to q.options mapping */}
                     {(q.options || []).map((opt, i) => {
                       const isThisCorrect = i === correctAnswer;
                       const isThisUserPick = i === userPick;
@@ -215,6 +229,14 @@ const ResultClient = ({ testId }) => {
           </button>
         </div>
       </div>
+
+      {/* --- REFACTORED CUSTOM POPUP COMPONENT --- */}
+      <ResultPopup 
+        isOpen={popupConfig.show} 
+        type={popupConfig.type} 
+        onClose={() => setPopupConfig({ show: false, type: null })} 
+      />
+
     </section>
   );
 };
