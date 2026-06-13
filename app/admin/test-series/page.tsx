@@ -8,12 +8,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PlusCircle, Check, Trash2, Upload, FileJson, FileText, Save, BookOpen, HelpCircle, ChevronDown } from "lucide-react";
+import { 
+  PlusCircle, Check, Trash2, Upload, FileJson, FileText, 
+  Save, BookOpen, HelpCircle, ChevronDown, Image as ImageIcon, X 
+} from "lucide-react";
 
 interface QuestionData {
   subject: string;
   question_text: string;
+  question_image?: string | null; // Added for main question image
   options: string[];
+  option_images?: (string | null)[]; // Added for option images
   correct_answer: number;
   explanation: string;
 }
@@ -33,7 +38,6 @@ function CustomDropdown({
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -90,7 +94,6 @@ function CustomDropdown({
 }
 
 export default function CreateQuizPage() {
-  // Quiz Details State
   const [examType, setExamType] = useState("JEE");
   const [customExamType, setCustomExamType] = useState("");
   const [title, setTitle] = useState("");
@@ -99,7 +102,6 @@ export default function CreateQuizPage() {
   const [difficulty, setDifficulty] = useState<"easy" | "moderate" | "hard">("moderate");
   const [instructions, setInstructions] = useState<string[]>([""]);
 
-  // UI Flow State
   const [detailsConfirmed, setDetailsConfirmed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -107,27 +109,38 @@ export default function CreateQuizPage() {
   const [questions, setQuestions] = useState<QuestionData[]>([]);
   const [qSubject, setQSubject] = useState("");
   const [qText, setQText] = useState("");
+  const [qImage, setQImage] = useState<string | null>(null); // Main Question Image
   const [qOptions, setQOptions] = useState(["", "", "", ""]);
+  const [qOptionImages, setQOptionImages] = useState<(string | null)[]>([null, null, null, null]); // Option Images
   const [qCorrect, setQCorrect] = useState(0);
   const [qExplanation, setQExplanation] = useState("");
 
-  // Bulk Upload State
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
 
   const EXAM_OPTIONS = ["Class 11", "Class 12", "JEE", "NEET", "PHYSICS", "Custom"];
   const DIFFICULTY_OPTIONS = ["easy", "moderate", "hard"];
 
-  // Step 1: Confirm Details Locally
-  const handleConfirmDetails = () => {
-    setDetailsConfirmed(true);
+  const handleConfirmDetails = () => setDetailsConfirmed(true);
+
+  // Helper to convert uploaded image to Base64 for instant preview
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, setter: (val: string | null) => void) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setter(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
-  // Step 2: Add single question locally
   const handleAddQuestion = () => {
     const newQuestion: QuestionData = {
       subject: qSubject,
       question_text: qText,
+      question_image: qImage,
       options: [...qOptions],
+      option_images: [...qOptionImages],
       correct_answer: qCorrect,
       explanation: qExplanation,
     };
@@ -136,12 +149,13 @@ export default function CreateQuizPage() {
     
     // Reset form
     setQText("");
+    setQImage(null);
     setQOptions(["", "", "", ""]);
+    setQOptionImages([null, null, null, null]);
     setQCorrect(0);
     setQExplanation("");
   };
 
-  // Step 2: Add bulk file questions locally
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -170,7 +184,9 @@ export default function CreateQuizPage() {
       const formattedQuestions = parsed.map((q) => ({
         subject: q.subject || "General",
         question_text: q.question_text || (q as any).questionText || "",
+        question_image: q.question_image || null,
         options: q.options,
+        option_images: q.option_images || [null, null, null, null],
         correct_answer: Number(q.correct_answer || (q as any).correctAnswer || 0),
         explanation: q.explanation || "",
       }));
@@ -184,7 +200,6 @@ export default function CreateQuizPage() {
     e.target.value = "";
   };
 
-  // Step 3: Final Submit to API Route
   const handleSubmitQuiz = async () => {
     if (questions.length === 0) {
       alert("Please add at least one question before submitting.");
@@ -235,10 +250,12 @@ export default function CreateQuizPage() {
   const sampleJson = JSON.stringify([
     {
       subject: "Physics",
-      question_text: "What is the SI unit of force?",
-      options: ["Joule", "Newton", "Watt", "Pascal"],
+      question_text: "Identify the process shown in the diagram below:",
+      question_image: "https://example.com/diagram.jpg",
+      options: ["Reflection", "Refraction", "Diffraction", "Dispersion"],
+      option_images: [null, null, null, "https://example.com/dispersion.jpg"],
       correct_answer: 1,
-      explanation: "Force is measured in Newtons (N) in the SI system."
+      explanation: "The diagram shows light bending as it passes through a new medium."
     }
   ], null, 2);
 
@@ -265,7 +282,6 @@ export default function CreateQuizPage() {
           <CardContent className="space-y-8 p-6 sm:p-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               
-              {/* Custom Animated Dropdowns */}
               <div className="space-y-3 z-20">
                 <CustomDropdown 
                   label="Exam Type / Class" 
@@ -373,7 +389,6 @@ export default function CreateQuizPage() {
         </Card>
       ) : (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
-          {/* Confirmation Banner */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-2xl bg-primary/5 border border-primary/20 shadow-sm">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-primary/10 rounded-xl">
@@ -419,9 +434,28 @@ export default function CreateQuizPage() {
                       <label className="text-sm font-semibold text-foreground block">Subject / Topic</label>
                       <Input className="bg-background rounded-xl border-border/60" value={qSubject} onChange={(e) => setQSubject(e.target.value)} placeholder="e.g. Physics" />
                     </div>
-                    <div className="md:col-span-3 space-y-2">
-                      <label className="text-sm font-semibold text-foreground block">Question Text</label>
+                    <div className="md:col-span-3 space-y-2 relative">
+                      <div className="flex justify-between items-end mb-1">
+                        <label className="text-sm font-semibold text-foreground block">Question Text</label>
+                        {/* Question Image Upload Button */}
+                        <div>
+                          <input type="file" id="qImageUpload" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, setQImage)} />
+                          <label htmlFor="qImageUpload" className="cursor-pointer text-xs font-medium text-primary hover:text-primary/80 flex items-center gap-1">
+                            <ImageIcon className="w-4 h-4" /> Add Image
+                          </label>
+                        </div>
+                      </div>
                       <Textarea className="bg-background resize-none rounded-xl border-border/60" value={qText} onChange={(e) => setQText(e.target.value)} placeholder="Type the main question body here..." rows={3} />
+                      
+                      {/* Question Image Preview */}
+                      {qImage && (
+                        <div className="relative mt-3 inline-block">
+                          <img src={qImage} alt="Question Preview" className="max-h-32 rounded-lg border border-border/50 shadow-sm" />
+                          <button onClick={() => setQImage(null)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 transition-colors">
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -434,24 +468,51 @@ export default function CreateQuizPage() {
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       {qOptions.map((opt, i) => (
-                        <div key={i} className={`flex items-center gap-3 p-2.5 rounded-xl border transition-all ${qCorrect === i ? 'bg-primary/5 border-primary shadow-sm' : 'bg-background border-border/60'}`}>
-                          <button
-                            onClick={() => setQCorrect(i)}
-                            className={`w-11 h-11 rounded-lg text-sm font-bold shrink-0 transition-all shadow-sm flex items-center justify-center
-                              ${qCorrect === i ? "bg-primary text-primary-foreground shadow-md scale-105" : "bg-muted text-muted-foreground hover:bg-muted/80"}`}
-                          >
-                            {String.fromCharCode(65 + i)}
-                          </button>
-                          <Input
-                            className={`border-0 bg-transparent focus-visible:ring-0 shadow-none px-2 ${qCorrect === i ? 'font-medium text-foreground' : 'text-muted-foreground'}`}
-                            value={opt}
-                            onChange={(e) => {
-                              const newOpts = [...qOptions];
-                              newOpts[i] = e.target.value;
-                              setQOptions(newOpts);
-                            }}
-                            placeholder={`Enter option ${String.fromCharCode(65 + i)}...`}
-                          />
+                        <div key={i} className={`flex flex-col gap-2 p-3 rounded-xl border transition-all ${qCorrect === i ? 'bg-primary/5 border-primary shadow-sm' : 'bg-background border-border/60'}`}>
+                          <div className="flex items-center gap-3">
+                            <button
+                              onClick={() => setQCorrect(i)}
+                              className={`w-11 h-11 rounded-lg text-sm font-bold shrink-0 transition-all shadow-sm flex items-center justify-center
+                                ${qCorrect === i ? "bg-primary text-primary-foreground shadow-md scale-105" : "bg-muted text-muted-foreground hover:bg-muted/80"}`}
+                            >
+                              {String.fromCharCode(65 + i)}
+                            </button>
+                            <Input
+                              className={`border-0 bg-transparent focus-visible:ring-0 shadow-none px-2 ${qCorrect === i ? 'font-medium text-foreground' : 'text-muted-foreground'}`}
+                              value={opt}
+                              onChange={(e) => {
+                                const newOpts = [...qOptions];
+                                newOpts[i] = e.target.value;
+                                setQOptions(newOpts);
+                              }}
+                              placeholder={`Enter option ${String.fromCharCode(65 + i)} text...`}
+                            />
+                            {/* Option Image Upload Icon */}
+                            <input type="file" id={`optImageUpload-${i}`} className="hidden" accept="image/*" onChange={(e) => {
+                                handleImageUpload(e, (val) => {
+                                  const newImages = [...qOptionImages];
+                                  newImages[i] = val;
+                                  setQOptionImages(newImages);
+                                })
+                            }} />
+                            <label htmlFor={`optImageUpload-${i}`} className="cursor-pointer text-muted-foreground hover:text-primary p-2">
+                              <ImageIcon className="w-5 h-5" />
+                            </label>
+                          </div>
+
+                          {/* Option Image Preview */}
+                          {qOptionImages[i] && (
+                            <div className="relative ml-14 inline-block">
+                              <img src={qOptionImages[i] as string} alt={`Option ${String.fromCharCode(65 + i)} Preview`} className="max-h-20 rounded-md border border-border/50 shadow-sm" />
+                              <button onClick={() => {
+                                const newImages = [...qOptionImages];
+                                newImages[i] = null;
+                                setQOptionImages(newImages);
+                              }} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 transition-colors">
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -464,7 +525,7 @@ export default function CreateQuizPage() {
 
                   <Button
                     onClick={handleAddQuestion}
-                    disabled={!qText.trim() || !qSubject.trim() || qOptions.some((o) => !o.trim())}
+                    disabled={(!qText.trim() && !qImage) || !qSubject.trim() || qOptions.some((o, i) => !o.trim() && !qOptionImages[i])}
                     className="w-full py-6 text-md font-bold rounded-xl"
                   >
                     <PlusCircle className="w-5 h-5 mr-2" /> Save to Test Series
@@ -537,7 +598,8 @@ export default function CreateQuizPage() {
                           <Badge variant="secondary" className="bg-primary/10 text-primary font-bold px-3 py-1 text-sm rounded-lg">Q{i + 1}</Badge>
                         </div>
                         <div className="min-w-0 pr-12 flex-1 space-y-2">
-                          <span className="block font-semibold text-foreground text-base leading-snug">{q.question_text}</span>
+                          <span className="block font-semibold text-foreground text-base leading-snug">{q.question_text || "[Image-based Question]"}</span>
+                          {q.question_image && <ImageIcon className="w-4 h-4 text-primary" />}
                           <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground pt-1">
                             <span className="bg-muted px-2.5 py-1 rounded-md font-medium text-foreground">{q.subject}</span>
                             <span className="flex items-center gap-1.5 bg-green-500/10 text-green-700 px-2.5 py-1 rounded-md font-medium">
