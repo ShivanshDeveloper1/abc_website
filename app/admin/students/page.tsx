@@ -1,62 +1,103 @@
 import React from "react";
 import { AllStudents } from "@/lib/actions/(admin)/Students";
+import { ChevronDown, BookOpen } from "lucide-react"; // Make sure lucide-react is installed
 
-// This tells Next.js NOT to cache this page. 
-// It will fetch fresh database records on every refresh.
 export const dynamic = "force-dynamic"; 
 
 const Page = async () => {
-  const students = await AllStudents();
+  // We now get an array of users, and each user has a .quizzes array
+  const groupedStudents = await AllStudents();
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Students</h1>
+    <div className="p-6 md:p-10 max-w-5xl mx-auto min-h-screen">
+        
+      {/* Header */}
+      <div className="mb-8 border-b border-slate-200 pb-4">
+        <h1 className="text-3xl font-black text-slate-900">Recent Submissions</h1>
+        <p className="text-slate-500 mt-1 font-medium">Grouped by student. Click a student to expand their tests.</p>
+      </div>
 
-      {/* Handle empty state gracefully */}
-      {students.length === 0 ? (
-        <p className="text-gray-400">No students found or database error.</p>
+      {/* Handle empty state */}
+      {groupedStudents.length === 0 ? (
+        <div className="bg-slate-50 p-8 rounded-2xl border border-slate-200 text-center">
+          <p className="text-slate-500 font-medium">No results found or database error.</p>
+        </div>
       ) : (
-        <div className="grid gap-4">
-          {students.map((user, index) => (
-            <div
-              key={user.userId} // If user.userId is ever undefined, use user._id
-              className="flex items-center justify-between bg-gray-700 p-4 rounded-xl shadow"
+        <div className="space-y-4">
+          {groupedStudents.map((student, index) => (
+            <details
+              key={student.userId}
+              className="group bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md [&_summary::-webkit-details-marker]:hidden"
             >
-              {/* Left */}
-              <div className="flex items-center gap-4">
-                <span className="text-lg font-bold text-gray-400">
-                  #{index + 1}
-                </span>
+              
+              {/* THE MAIN ROW (Profile Info) */}
+              <summary className="flex flex-col sm:flex-row sm:items-center justify-between p-5 cursor-pointer list-none gap-4">
+                
+                <div className="flex items-center gap-4">
+                  <span className="text-sm font-bold text-slate-300 w-6">
+                    {index + 1}
+                  </span>
 
-                {/* Added fallback UI in case imageUrl is broken/empty */}
-                {user.imageUrl ? (
-                  <img
-                    src={user.imageUrl}
-                    alt={user.name}
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center text-white font-bold">
-                    {user.name.charAt(0).toUpperCase()}
+                  {student.userImage ? (
+                    <img
+                      src={student.userImage}
+                      alt={student.userName}
+                      className="w-12 h-12 rounded-full object-cover border-2 border-slate-100 shrink-0"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-lg shrink-0">
+                      {student.userName.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+
+                  <div>
+                    <h2 className="text-slate-900 font-bold text-lg">{student.userName}</h2>
+                    <p className="text-slate-500 text-sm font-medium mt-0.5">
+                      {student.quizzes.length} {student.quizzes.length === 1 ? "Recent Test" : "Recent Tests"}
+                    </p>
                   </div>
-                )}
+                </div>
 
-                <div>
-                  <p className="text-white font-semibold">{user.name}</p>
-                  <p className="text-gray-400 text-sm">
-                    Attempts: {user.quizzesAttempted}
-                  </p>
+                {/* Arrow Icon that rotates when opened */}
+                <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-open:rotate-180 transition-transform duration-300 ml-auto">
+                  <ChevronDown size={20} />
+                </div>
+              </summary>
+
+              {/* THE DROPDOWN LIST (Individual Quizzes) */}
+              <div className="bg-slate-50 p-5 border-t border-slate-100">
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                  <BookOpen size={14} className="text-indigo-400" />
+                  Test History
+                </h4>
+                
+                <div className="grid gap-3">
+                  {student.quizzes.map((quiz: any) => (
+                    <div 
+                      key={quiz._id} 
+                      className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between hover:border-indigo-200 transition-colors"
+                    >
+                      <div>
+                        <p className="text-slate-800 font-bold text-md">{quiz.testTitle}</p>
+                        {quiz.createdAt && (
+                          <p className="text-slate-400 text-xs font-medium mt-1">
+                            {new Date(quiz.createdAt).toLocaleString()}
+                          </p>
+                        )}
+                      </div>
+                      
+                      <div className="text-right bg-emerald-50 px-4 py-2 rounded-lg border border-emerald-100 shrink-0">
+                        <p className="text-emerald-600 font-black text-lg flex items-baseline gap-1">
+                          {quiz.score} 
+                          <span className="text-xs font-bold text-emerald-400/80">/ {quiz.maxScore}</span>
+                        </p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-
-              {/* Right */}
-              <div className="text-right">
-                <p className="text-green-400 font-bold">
-                  {user.totalScore}
-                </p>
-                <p className="text-gray-400 text-sm">Score</p>
-              </div>
-            </div>
+              
+            </details>
           ))}
         </div>
       )}

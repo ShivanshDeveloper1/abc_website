@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-// Firebase Context & Auth Imports (Replacing Clerk completely)
+// Firebase Context & Auth Imports
 import { useUser } from "@/context/AuthContext"; 
 import { auth } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
@@ -26,7 +26,6 @@ const Navbar = () => {
   const [open, setOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [mobileResultsOpen, setMobileResultsOpen] = useState(false);
-  const [desktopDropdownOpen, setDesktopDropdownOpen] = useState(false);
   
   const router = useRouter();
   
@@ -38,7 +37,6 @@ const Navbar = () => {
       console.log("🚨 Signing out from Firebase...");
       await signOut(auth);
       setOpen(false);
-      setDesktopDropdownOpen(false);
       router.push("/");
     } catch (error) {
       console.error("Error signing out: ", error);
@@ -46,16 +44,8 @@ const Navbar = () => {
   };
 
   const Items = [
-    {
-      name: "Classroom Courses",
-      href: "/courses",
-      icon: <GraduationCap size={20} />,
-    },
-    {
-      name: "Scholarship",
-      href: "/scholarship",
-      icon: <LayoutDashboard size={20} />,
-    },
+    { name: "Classroom Courses", href: "/courses", icon: <GraduationCap size={20} /> },
+    { name: "Scholarship", href: "/scholarship", icon: <LayoutDashboard size={20} /> },
     { name: "Test Series", href: "/test-series", icon: <BookOpen size={20} /> },
     { name: "Results", href: "#", icon: <ClipboardList size={20} /> },
     { name: "About Us", href: "/about-us", icon: <Info size={20} /> },
@@ -156,40 +146,18 @@ const Navbar = () => {
               {!isLoaded ? (
                 <div className="w-8 h-8 rounded-full bg-gray-100 animate-pulse" />
               ) : user ? (
-                <div className="relative">
-                  {/* Custom Firebase Dropdown Avatar */}
-                  <button
-                    onClick={() => setDesktopDropdownOpen(!desktopDropdownOpen)}
-                    className="flex items-center gap-2 focus:outline-none cursor-pointer"
-                  >
-                    <div className="relative w-10 h-10 overflow-hidden rounded-full border border-gray-200">
-                      <Image
-                        src={user.imageUrl || "/logo.jpeg"} 
-                        alt="Profile Pic"
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                  </button>
-
-                  {desktopDropdownOpen && (
-                    <>
-                      <div 
-                        className="fixed inset-0 z-40" 
-                        onClick={() => setDesktopDropdownOpen(false)} 
-                      />
-                      <div className="absolute right-0 mt-3 w-48 bg-white border border-gray-100 rounded-xl shadow-xl z-50 p-1">
-                        <button
-                          onClick={handleSignOut}
-                          className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-50 rounded-xl transition-all cursor-pointer"
-                        >
-                          <LogOut size={16} />
-                          Sign Out
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
+                /* Updated: Clicking avatar now directly routes to /profile */
+                <button
+                  onClick={() => router.push("/profile")}
+                  className="relative flex items-center justify-center w-10 h-10 overflow-hidden rounded-full border-2 border-transparent hover:border-blue-500 transition-all focus:outline-none cursor-pointer"
+                >
+                  <Image
+                    src={user.imageUrl || "/logo.jpeg"} 
+                    alt="Profile Pic"
+                    fill
+                    className="object-cover"
+                  />
+                </button>
               ) : (
                 <button
                   onClick={() => router.push("/login")}
@@ -308,7 +276,14 @@ const Navbar = () => {
               <div className="w-full h-12 bg-gray-200 animate-pulse rounded-2xl" />
             ) : user ? (
               <div className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100">
-                <div className="flex items-center gap-3">
+                {/* Updated: Clicking mobile avatar also routes to /profile */}
+                <div 
+                  className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={() => {
+                    router.push("/profile");
+                    setOpen(false);
+                  }}
+                >
                   <div className="relative w-10 h-10 overflow-hidden rounded-full">
                     <Image
                       src={user.imageUrl || "/logo.jpeg"}
@@ -322,13 +297,14 @@ const Navbar = () => {
                       {user.fullName || "Student"}
                     </span>
                     <span className="text-[10px] text-gray-500 uppercase tracking-tight mt-1">
-                      Active Account
+                      View Profile
                     </span>
                   </div>
                 </div>
                 <button 
                   onClick={handleSignOut} 
                   className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all cursor-pointer"
+                  aria-label="Sign Out"
                 >
                   <LogOut size={20} />
                 </button>
