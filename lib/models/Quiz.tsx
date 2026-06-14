@@ -6,7 +6,8 @@ const questionSchema = new mongoose.Schema({
   question_text: { type: String, required: true }, // Matches your JSON
   options: [{ type: String, required: true }],
   correct_answer: { type: Number, required: true }, // Index 0-3
-  explanation: { type: String }
+  explanation: { type: String },
+ imageUrl: { type: String, required: false }, // <-- ADD THIS LINE
 });
 
 const quizSchema = new mongoose.Schema({

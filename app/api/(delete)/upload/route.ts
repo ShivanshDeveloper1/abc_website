@@ -7,7 +7,7 @@ export async function POST(req) {
 
     const uploadRes = await cloudinary.uploader.upload(body.file, {
       folder: "blogs",
-      resource_type: auto,
+    resource_type: "auto", // <-- FIX: added quotes here
     });
     return NextResponse.json({ url: uploadRes.secure_url });
   } catch (error) {
