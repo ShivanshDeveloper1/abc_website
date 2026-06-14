@@ -189,11 +189,7 @@ const About = () => {
 
       {/* Offerings */}
 
-      <section>
-        <p>Our <span className="text-blue-600">Offerings</span></p>
-
-        <p></p>
-      </section>
+    
 
 
 
