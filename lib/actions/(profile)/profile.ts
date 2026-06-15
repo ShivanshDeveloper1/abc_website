@@ -15,7 +15,7 @@ export async function getUserProfileData(userId: string) {
 
     // 2. Fetch Quiz History
     const history = await QuizResult.find({ userId })
-      .sort({ createdAt: -1 }) // Newest first
+      .sort({ createdAt: -1 })
       .lean();
 
     // 3. Calculate derived metrics
@@ -30,11 +30,16 @@ export async function getUserProfileData(userId: string) {
     const accuracy = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
     const highestScore = history.length > 0 ? Math.max(...history.map((q: any) => q.score)) : 0;
 
+    // THE FIX: Parse/Stringify the stats object just like you did with history!
+    const sanitizedStats = stats 
+      ? JSON.parse(JSON.stringify(stats)) 
+      : { quizzesAttempted: 0, totalScore: 0, totalMaxScore: 0 };
+
     return {
       success: true,
       data: {
-        stats: stats || { quizzesAttempted: 0, totalScore: 0, totalMaxScore: 0 },
-        history: JSON.parse(JSON.stringify(history)), // Serialize for Next.js Server Action
+        stats: sanitizedStats, 
+        history: JSON.parse(JSON.stringify(history)), 
         metrics: {
           accuracy,
           highestScore,
