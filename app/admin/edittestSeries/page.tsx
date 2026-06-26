@@ -11,7 +11,9 @@ const AdminQuizEditor = () => {
   const [uploadingImageIndex, setUploadingImageIndex] = useState(null);
 
   useEffect(() => {
-    fetch('/api/admin/edit-quizzes')
+    fetch('/api/admin/edit-quizzes',{
+      cache:'no-store'
+    })
       .then(res => res.json())
       .then(data => {
         setQuizList(data);
@@ -26,7 +28,9 @@ const AdminQuizEditor = () => {
   const handleSelectQuiz = async (id) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/edit-quizzes/${id}`);
+      const res = await fetch(`/api/admin/edit-quizzes/${id}`,{
+        cache:'no-store'
+      });
       const data = await res.json();
       setSelectedQuiz(data);
     } catch (error) {
@@ -36,17 +40,30 @@ const AdminQuizEditor = () => {
     }
   };
 
-  const handleQuestionChange = (index, field, value) => {
-    const updatedQuiz = { ...selectedQuiz };
-    updatedQuiz.questions[index][field] = value;
-    setSelectedQuiz(updatedQuiz);
-  };
+const handleQuestionChange = (index, field, value) => {
+  setSelectedQuiz((prevQuiz) => ({
+    ...prevQuiz,
+    questions: prevQuiz.questions.map((q, i) => 
+      i === index ? { ...q, [field]: value } : q
+    )
+  }));
+};
 
-  const handleOptionChange = (qIndex, optIndex, value) => {
-    const updatedQuiz = { ...selectedQuiz };
-    updatedQuiz.questions[qIndex].options[optIndex] = value;
-    setSelectedQuiz(updatedQuiz);
-  };
+
+  // ✅ CORRECTED: Deep copying the question AND the specific options array
+const handleOptionChange = (qIndex, optIndex, value) => {
+  setSelectedQuiz((prevQuiz) => ({
+    ...prevQuiz,
+    questions: prevQuiz.questions.map((q, i) => {
+      if (i === qIndex) {
+        const updatedOptions = [...q.options];
+        updatedOptions[optIndex] = value;
+        return { ...q, options: updatedOptions };
+      }
+      return q;
+    })
+  }));
+};
 
   const handleAddQuestion = () => {
     if (!selectedQuiz) return;
@@ -74,11 +91,24 @@ const AdminQuizEditor = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await fetch(`/api/admin/edit-quizzes/${selectedQuiz._id}`, {
+  const res =    await fetch(`/api/admin/edit-quizzes/${selectedQuiz._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(selectedQuiz)
       });
+      const data = await res.json()
+      console.log("SAVE RESPONSES ->", data)
+
+      if(!res.ok){
+        throw new Error(data.error)
+      }
+        setSelectedQuiz(data.quiz);
+
+        
+
+
+
+
       alert('Quiz updated successfully!');
     } catch (error) {
       alert('Failed to save.');
@@ -106,6 +136,8 @@ const AdminQuizEditor = () => {
       if (!res.ok) {
         throw new Error(data.error || "Upload failed");
       }
+
+      
 
       if (data.secure_url) {
         handleQuestionChange(qIndex, 'imageUrl', data.secure_url);
@@ -145,12 +177,13 @@ const AdminQuizEditor = () => {
                   : 'bg-white border-gray-200 hover:bg-gray-50 text-gray-700'
               }`}
             >
-              {q.title}
+        <span>{q.title}</span>   
+        {/* 🟢 Status indicator dot */}
+        <span className='text-xs'>{q.isLocked ? "🔴" : "🟢"}</span>   
             </button>
           ))}
         </div>
       </aside>
-
       {/* MAIN CONTENT - Edit Area */}
       <section className="w-3/4 p-8 h-screen overflow-y-auto">
         {!selectedQuiz ? (
@@ -166,7 +199,37 @@ const AdminQuizEditor = () => {
               <div>
                 <span className="text-xs font-bold text-red-600 tracking-wider uppercase">Currently Editing</span>
                 <h1 className="text-2xl font-bold text-gray-900 mt-0.5">{selectedQuiz.title}</h1>
+                {/* ADD THIS DROPDOWN FOR CLASS LEVEL */}
+                <div className='mt-2'>
+                  <label className='text-xs font-bold text-gray-500 uppercase mr-2'>Target Class:</label>
+                  <select 
+              value={selectedQuiz.classLevel || ""}
+        onChange={(e) => setSelectedQuiz({ ...selectedQuiz, classLevel: e.target.value })}
+        className="bg-gray-50 border border-gray-300 rounded-md text-sm px-2 py-1 focus:ring-red-500"
+                  >
+                    <option value="">Select a Class...</option>
+        <option value="Class 11">Class 11</option>
+        <option value="Class 12">Class 12</option>
+        <option value="Dropper">Dropper</option>
+        <option value="Foundation">Foundation</option>
+                  </select>
+                </div>
               </div>
+
+
+              {/* New Freeze Toggle Controls */}
+<div className="flex items-center gap-2 mt-3 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200 w-fit">
+      <input
+        type="checkbox"
+        id="freezeQuiz"
+        checked={selectedQuiz.isLocked || false}
+        onChange={(e) => setSelectedQuiz({ ...selectedQuiz, isLocked: e.target.checked })}
+        className="w-4 h-4 text-red-600 focus:ring-red-500 border-gray-300 rounded cursor-pointer"
+      />
+      <label htmlFor="freezeQuiz" className="text-xs font-semibold text-gray-700 cursor-pointer select-none">
+        {selectedQuiz.isLocked ? "🔴 Test is Frozen (Hidden/Locked)" : "🟢 Test is Active (Live for Students)"}
+      </label>
+    </div>
               <button 
                 onClick={handleSave}
                 disabled={saving}

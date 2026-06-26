@@ -8,7 +8,7 @@ export async function GET() {
 
     // Included createdAt to use as the startDate for your UI logic
     const quizzes = await Quiz.find({})
-      .select("_id title examType difficulty duration totalQuestions createdAt")
+  .select("_id title examType classLevel language difficulty duration totalQuestions createdAt isLocked")
       .sort({ createdAt: -1 });
 
     return NextResponse.json(quizzes, { status: 200 });

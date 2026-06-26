@@ -10,11 +10,13 @@ export async function GET() {
     // 1. Connect to your database
     await connectDB(); 
 
+    
+
     // 2. Fetch the top 10 users, sorted by totalScore descending
     const topUsers = await LeaderboardStats.find({})
       .sort({ totalScore: -1, lastAttemptAt: 1 }) // Using the index you created!
       .limit(10)
-      .lean(); // .lean() makes it a plain JavaScript object
+      .lean({ virtuals: true }) // .lean() makes it a plain JavaScript object
 
     return NextResponse.json(topUsers);
   } catch (error) {

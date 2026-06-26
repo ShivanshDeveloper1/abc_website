@@ -11,6 +11,7 @@ import {
   Minus,
   Medal,
 } from "lucide-react";
+import Image from "next/image";
 
 const calculateNearMiss = (data) => {
   const sorted = [...data].sort((a, b) => b.score - a.score);
@@ -109,10 +110,18 @@ export default function FullLeaderboardPage({currentUserId}) {
     const fetchLeaderboardData = async () => {
       try {
         const response = await fetch('/api/leaderboard');
+
+        if(!response.ok){
+          throw new Error('Failed to fetch leaderboard')
+        }
+
+
+
+
         const dbData = await response.json();
 
         // 3. Map the database fields to match your UI's exact format
-        const formattedData = dbData.map((user) => ({
+        const formattedData = (dbData || []).map((user) => ({
           id: user.userId,                   // Map db userId to UI id
           name: user.name,                   // Same
           score: user.totalScore,            // Map db totalScore to UI score
@@ -241,9 +250,11 @@ export default function FullLeaderboardPage({currentUserId}) {
                   {/* Candidate */}
                   <div className="flex items-center gap-4 min-w-0">
                     <div className="relative flex-shrink-0">
-                      <img
-                        src={user.image}
-                        alt={user.name}
+                    <Image
+ src={user.image}
+ alt={user.name}
+ width={56}
+ height={56}
                         className={`rounded-full object-cover shadow-sm ${isTopper ? "w-14 h-14 ring-2 ring-yellow-400 ring-offset-2" : "w-11 h-11 border border-gray-100"}`}
                       />
                       {isTopper && (
