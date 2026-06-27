@@ -11,11 +11,12 @@ import {
   Atom, 
   ClipboardList, 
   GraduationCap,
-  Languages // Added for the language badge
+  Languages,
+  BookOpen // Added for the Class filter icon
 } from "lucide-react";
 import Link from "next/link";
 
-// Upgraded configuration with gradients, glowing shadows, and ring offsets
+// Configuration for Exam Types
 const getCategoryConfig = (examType: string) => {
   const type = examType?.toUpperCase();
   
@@ -59,7 +60,10 @@ const TestSeries = () => {
   const [quizzes, setQuizzes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  
+  // Track both filters independently
   const [activeFilter, setActiveFilter] = useState("All");
+  const [activeClassFilter, setActiveClassFilter] = useState("All");
   
   const now = new Date();
 
@@ -89,19 +93,40 @@ const TestSeries = () => {
     fetchQuizzes();
   }, []);
 
+  // 1. Extract unique exam types
   const categories = useMemo(() => {
     const types = quizzes.map((q) => q.examType).filter(Boolean);
     return ["All", ...Array.from(new Set(types))];
   }, [quizzes]);
 
+  // 2. Extract unique class levels
+  const classLevels = useMemo(() => {
+    const levels = quizzes.map((q) => q.classLevel).filter(Boolean);
+    return ["All", ...Array.from(new Set(levels))];
+  }, [quizzes]);
+
+  // 3. Filter by BOTH exam type AND class level
   const filteredQuizzes = useMemo(() => {
-    if (activeFilter === "All") return quizzes;
-    return quizzes.filter((q) => q.examType?.toLowerCase() === activeFilter?.toLowerCase());
-  }, [activeFilter, quizzes]);
+    return quizzes.filter((q) => {
+      const matchExam = activeFilter === "All" || q.examType?.toLowerCase() === activeFilter?.toLowerCase();
+      const matchClass = activeClassFilter === "All" || q.classLevel?.toLowerCase() === activeClassFilter?.toLowerCase();
+      return matchExam && matchClass;
+    });
+  }, [activeFilter, activeClassFilter, quizzes]);
 
   const getCategoryCount = (catName: string) => {
     if (catName === "All") return quizzes.length;
     return quizzes.filter((q) => q.examType?.toLowerCase() === catName?.toLowerCase()).length;
+  };
+
+  const getClassCount = (className: string) => {
+    // Show count based on current exam filter so it feels dynamic
+    const baseQuizzes = activeFilter === "All" 
+      ? quizzes 
+      : quizzes.filter((q) => q.examType?.toLowerCase() === activeFilter?.toLowerCase());
+      
+    if (className === "All") return baseQuizzes.length;
+    return baseQuizzes.filter((q) => q.classLevel?.toLowerCase() === className?.toLowerCase()).length;
   };
 
   const formatFullDate = (dateString: string) => {
@@ -141,159 +166,195 @@ const TestSeries = () => {
 
   return (
     <div className="space-y-8">
-      {/* UPGRADED CATEGORY SELECTOR */}
-      <div className="space-y-4 bg-white/50 p-4 rounded-2xl border border-gray-100/50 backdrop-blur-sm">
-        <div className="flex items-center gap-2 text-gray-800 text-sm font-black uppercase tracking-widest">
-          <GraduationCap size={18} className="text-red-500" />
-          <span>Select Category</span>
-        </div>
+      {/* FILTER SECTION CONTAINER */}
+      <div className="space-y-6 bg-white/50 p-5 rounded-3xl border border-gray-100/50 backdrop-blur-sm shadow-sm">
         
-        {/* Switched from Grid to Flex-Wrap for organic pill layout */}
-        <div className="flex flex-wrap items-center gap-3">
-          {categories.map((cat) => {
-            const config = getCategoryConfig(cat);
-            const IconComponent = config.icon;
-            const isActive = activeFilter?.toLowerCase() === cat?.toLowerCase();
-            const count = getCategoryCount(cat);
+        {/* ROW 1: EXAM CATEGORY */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-gray-800 text-sm font-black uppercase tracking-widest">
+            <GraduationCap size={18} className="text-red-500" />
+            <span>Exam Category</span>
+          </div>
+          
+          <div className="flex flex-wrap items-center gap-3">
+            {categories.map((cat) => {
+              const config = getCategoryConfig(cat);
+              const IconComponent = config.icon;
+              const isActive = activeFilter?.toLowerCase() === cat?.toLowerCase();
+              const count = getCategoryCount(cat);
 
-            return (
-              <button
-                key={cat}
-                onClick={() => setActiveFilter(cat)}
-                className={`group flex items-center justify-between gap-3 px-4 py-2.5 rounded-full border text-xs font-bold transition-all duration-300 ease-out select-none hover:-translate-y-0.5 ${
-                  isActive ? config.activeClass : config.inactiveClass
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <IconComponent 
-                    size={16} 
-                    className={`transition-colors duration-300 ${isActive ? "text-white" : config.iconColor}`} 
-                  />
-                  <span>{config.label}</span>
-                </div>
-                
-                {/* Beautiful dynamic badge */}
-                <span className={`flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-black rounded-full transition-colors duration-300 ${
-                  isActive 
-                    ? "bg-white/25 text-white" 
-                    : "bg-gray-100 text-gray-500 group-hover:bg-gray-200"
-                }`}>
-                  {count}
-                </span>
-              </button>
-            );
-          })}
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setActiveFilter(cat)}
+                  className={`group flex items-center justify-between gap-3 px-4 py-2.5 rounded-full border text-xs font-bold transition-all duration-300 ease-out select-none hover:-translate-y-0.5 ${
+                    isActive ? config.activeClass : config.inactiveClass
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <IconComponent 
+                      size={16} 
+                      className={`transition-colors duration-300 ${isActive ? "text-white" : config.iconColor}`} 
+                    />
+                    <span>{config.label}</span>
+                  </div>
+                  
+                  <span className={`flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-black rounded-full transition-colors duration-300 ${
+                    isActive 
+                      ? "bg-white/25 text-white" 
+                      : "bg-gray-100 text-gray-500 group-hover:bg-gray-200"
+                  }`}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
+
+        {/* Divider between filters */}
+        {classLevels.length > 1 && <hr className="border-gray-100" />}
+
+        {/* ROW 2: CLASS LEVEL (Only renders if data contains classes) */}
+        {classLevels.length > 1 && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 text-gray-800 text-sm font-black uppercase tracking-widest">
+              <BookOpen size={18} className="text-indigo-500" />
+              <span>Target Class</span>
+            </div>
+            
+            <div className="flex flex-wrap items-center gap-3">
+              {classLevels.map((className) => {
+                const isActive = activeClassFilter?.toLowerCase() === className?.toLowerCase();
+                const count = getClassCount(className);
+                const displayLabel = className === "All" ? "All Classes" : className;
+
+                return (
+                  <button
+                    key={className}
+                    onClick={() => setActiveClassFilter(className)}
+                    className={`group flex items-center justify-between gap-2 px-4 py-2 rounded-xl border text-xs font-bold transition-all duration-300 ease-out select-none hover:-translate-y-0.5 ${
+                      isActive 
+                        ? "bg-gradient-to-r from-indigo-500 to-indigo-600 border-transparent text-white shadow-md shadow-indigo-500/20 ring-2 ring-indigo-500 ring-offset-2 ring-offset-white" 
+                        : "bg-white border-gray-200 text-gray-600 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700"
+                    }`}
+                  >
+                    <span>{displayLabel}</span>
+                    <span className={`flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-black rounded-md transition-colors duration-300 ${
+                      isActive 
+                        ? "bg-white/20 text-white" 
+                        : "bg-gray-100 text-gray-500 group-hover:bg-indigo-100 group-hover:text-indigo-600"
+                    }`}>
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* QUIZ LIST GRID */}
       <div className="space-y-6">
         {filteredQuizzes.length > 0 ? (
-          // CHANGED: Added lg:grid-cols-3 here so it doesn't get too wide on laptops
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-12">
-         {filteredQuizzes.map((item: any) => {
-  // 1. Define our conditions
-  const isLive = item.createdAt ? now >= new Date(item.createdAt) : true;
-  const isFrozen = item.isLocked === true; // Reads the lock status from the DB
+            {filteredQuizzes.map((item: any) => {
+              const isLive = item.createdAt ? now >= new Date(item.createdAt) : true;
+              const isFrozen = item.isLocked === true;
 
-  return (
-    <div
-      key={item._id}
-      // 2. Add an opacity change if the test is frozen
-      className={`group relative bg-white rounded-2xl border transition-all duration-300 ${
-        isFrozen
-          ? "border-red-100 bg-red-50/20 opacity-80" // Styling for locked state
-          : isLive
-            ? "border-gray-200/80 hover:border-red-200 hover:-translate-y-1.5 hover:shadow-[0_16px_32px_-4px_rgba(239,68,68,0.06),0_4px_12px_-2px_rgba(0,0,0,0.02)]"
-            : "border-gray-100 bg-gray-50/40 opacity-80 grayscale-[15%]"
-      }`}
-    >
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
-          
-          {/* 3. Status Badge Logic */}
-          {isFrozen ? (
-            <div className="flex items-center gap-2 bg-red-50 px-2.5 py-1 rounded-full border border-red-100">
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-              <span className="text-[10px] font-black uppercase tracking-wider text-red-700">
-                Admin Locked
-              </span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 bg-gray-50 px-2.5 py-1 rounded-full border border-gray-100">
-              <span className="relative flex h-2 w-2">
-                {isLive && (
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                )}
-                <span className={`relative inline-flex rounded-full h-2 w-2 ${isLive ? "bg-emerald-500" : "bg-amber-400"}`}></span>
-              </span>
-              <span className={`text-[10px] font-black uppercase tracking-wider ${isLive ? "text-emerald-700" : "text-amber-700"}`}>
-                {isLive ? "Live" : "Upcoming"}
-              </span>
-            </div>
-          )}
-          
-          {/* Right: Metadata Badges */}
-          <div className="flex items-center gap-1.5">
+              return (
+                <div
+                  key={item._id}
+                  className={`group relative bg-white rounded-2xl border transition-all duration-300 flex flex-col ${
+                    isFrozen
+                      ? "border-red-100 bg-red-50/20 opacity-80"
+                      : isLive
+                        ? "border-gray-200/80 hover:border-red-200 hover:-translate-y-1.5 hover:shadow-[0_16px_32px_-4px_rgba(239,68,68,0.06),0_4px_12px_-2px_rgba(0,0,0,0.02)]"
+                        : "border-gray-100 bg-gray-50/40 opacity-80 grayscale-[15%]"
+                  }`}
+                >
+                  <div className="p-6 flex flex-col flex-grow">
+                    <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
+                      
+                      {isFrozen ? (
+                        <div className="flex items-center gap-2 bg-red-50 px-2.5 py-1 rounded-full border border-red-100">
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                          <span className="text-[10px] font-black uppercase tracking-wider text-red-700">
+                            Admin Locked
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 bg-gray-50 px-2.5 py-1 rounded-full border border-gray-100">
+                          <span className="relative flex h-2 w-2">
+                            {isLive && (
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            )}
+                            <span className={`relative inline-flex rounded-full h-2 w-2 ${isLive ? "bg-emerald-500" : "bg-amber-400"}`}></span>
+                          </span>
+                          <span className={`text-[10px] font-black uppercase tracking-wider ${isLive ? "text-emerald-700" : "text-amber-700"}`}>
+                            {isLive ? "Live" : "Upcoming"}
+                          </span>
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center gap-1.5">
+                        {item.classLevel && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-lg bg-blue-50/60 text-blue-700 border border-blue-100/80 uppercase tracking-wide">
+                            {item.classLevel}
+                          </span>
+                        )}
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-lg bg-indigo-50/60 text-indigo-700 border border-indigo-100/80 uppercase tracking-wide">
+                          <Languages size={11} className="text-indigo-500" />
+                          {item.language || "English"}
+                        </span>
+                        <span className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700 uppercase border border-gray-200/60 tracking-wide">
+                          {item.examType || "Mock Test"}
+                        </span>
+                      </div>
+                    </div>
 
+                    <h3 className={`text-lg font-extrabold mb-3 leading-snug transition-colors duration-200 line-clamp-2 ${isFrozen ? 'text-gray-500' : 'text-gray-900 group-hover:text-red-600'}`}>
+                      {item.title}
+                    </h3>
 
-            {/* ADD THIS NEW BADGE FOR CLASS LEVEL */}
-  {item.classLevel && (
-    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-lg bg-blue-50/60 text-blue-700 border border-blue-100/80 uppercase tracking-wide">
-      {item.classLevel}
-    </span>
-  )}
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-lg bg-indigo-50/60 text-indigo-700 border border-indigo-100/80 uppercase tracking-wide">
-              <Languages size={11} className="text-indigo-500" />
-              {item.language || "English"}
-            </span>
-            <span className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700 uppercase border border-gray-200/60 tracking-wide">
-              {item.examType || "Mock Test"}
-            </span>
-          </div>
-        </div>
+                    {/* Added mt-auto to push the bottom sections down for equal height cards */}
+                    <div className="mt-auto">
+                      <div className="flex items-center text-xs font-semibold text-gray-500 mb-6 bg-gray-50/80 w-fit px-3 py-1.5 rounded-lg border border-gray-100/70">
+                        <Clock size={14} className="mr-2 text-gray-400" />
+                        <span>
+                          {isLive ? "Started: " : "Unlocks: "} 
+                          <span className="text-gray-800 font-medium">{formatFullDate(item.createdAt)}</span>
+                        </span>
+                      </div>
 
-        {/* Title */}
-        <h3 className={`text-lg font-extrabold mb-3 leading-snug transition-colors duration-200 line-clamp-2 ${isFrozen ? 'text-gray-500' : 'text-gray-900 group-hover:text-red-600'}`}>
-          {item.title}
-        </h3>
-
-        {/* Operational Clock Details */}
-        <div className="flex items-center text-xs font-semibold text-gray-500 mb-6 bg-gray-50/80 w-fit px-3 py-1.5 rounded-lg border border-gray-100/70">
-          <Clock size={14} className="mr-2 text-gray-400" />
-          <span>
-            {isLive ? "Started: " : "Unlocks: "} 
-            <span className="text-gray-800 font-medium">{formatFullDate(item.createdAt)}</span>
-          </span>
-        </div>
-
-        {/* 4. Dynamic Action Button Logic */}
-        {isFrozen ? (
-           <button 
-             disabled
-             className="w-full flex items-center justify-center gap-2 bg-red-50 text-red-400 py-3 rounded-xl text-sm font-bold border border-red-200 cursor-not-allowed"
-           >
-             <Lock size={16} />
-             Temporarily Disabled
-           </button>
-        ) : isLive ? (
-          <Link
-            href={`/test-series/${item._id}`}
-            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-red-800 to-red-900 text-white py-3 rounded-xl hover:from-red-600 hover:to-red-700 hover:shadow-lg hover:shadow-red-500/20 transition-all duration-300 text-sm font-bold tracking-wide active:scale-[0.98]"
-          >
-            <Eye size={16} />
-            Start Test Now
-          </Link>
-        ) : (
-          <div className="w-full flex items-center justify-center gap-2 bg-gray-100 text-gray-400 py-3 rounded-xl text-sm font-bold border border-gray-200/60 cursor-not-allowed">
-            <Lock size={16} />
-            Unlocks {formatShortDate(item.createdAt)}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-})}
+                      {isFrozen ? (
+                        <button 
+                          disabled
+                          className="w-full flex items-center justify-center gap-2 bg-red-50 text-red-400 py-3 rounded-xl text-sm font-bold border border-red-200 cursor-not-allowed"
+                        >
+                          <Lock size={16} />
+                          Temporarily Disabled
+                        </button>
+                      ) : isLive ? (
+                        <Link
+                          href={`/test-series/${item._id}`}
+                          className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-red-800 to-red-900 text-white py-3 rounded-xl hover:from-red-600 hover:to-red-700 hover:shadow-lg hover:shadow-red-500/20 transition-all duration-300 text-sm font-bold tracking-wide active:scale-[0.98]"
+                        >
+                          <Eye size={16} />
+                          Start Test Now
+                        </Link>
+                      ) : (
+                        <div className="w-full flex items-center justify-center gap-2 bg-gray-100 text-gray-400 py-3 rounded-xl text-sm font-bold border border-gray-200/60 cursor-not-allowed">
+                          <Lock size={16} />
+                          Unlocks {formatShortDate(item.createdAt)}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         ) : (
           <div className="py-20 flex flex-col items-center justify-center bg-gray-50/40 rounded-3xl border-2 border-dashed border-gray-200 max-w-xl mx-auto">
@@ -301,7 +362,10 @@ const TestSeries = () => {
               <ClipboardList size={32} />
             </div>
             <h4 className="text-base font-bold text-gray-800 mb-1">No Tests Available</h4>
-            <p className="text-gray-500 text-sm font-medium">We couldn't find any tests matching "{activeFilter}".</p>
+            <p className="text-gray-500 text-sm font-medium text-center px-4">
+              We couldn't find any tests matching <br/>
+              <span className="text-red-500 font-bold">{activeFilter}</span> and <span className="text-indigo-500 font-bold">{activeClassFilter}</span>.
+            </p>
           </div>
         )}
       </div>
