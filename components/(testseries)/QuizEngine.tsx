@@ -19,6 +19,7 @@ const QuizEngine = () => {
 
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  // FIXED: Added the missing curly brace for the if statement
   let questionsList = [];
   if (Array.isArray(quizData?.questions)) {
     if (Array.isArray(quizData.questions[0])) {
@@ -27,6 +28,7 @@ const QuizEngine = () => {
       questionsList = quizData.questions;
     }
   }
+
   const totalQuestions = questionsList.length;
   const totalTimeInSeconds = (quizData?.duration || totalQuestions) * 60;
   
@@ -45,11 +47,9 @@ const QuizEngine = () => {
   }, [currentIndex]);
 
   // 2. Auto-save every 15 seconds
-// 2. Auto-save every 15 seconds
   useEffect(() => {
     if (!quizData?._id) return;
     const saveInterval = setInterval(() => {
-      // FIX: Added !hasSubmittedRef.current to prevent zombie saves
       if (Object.keys(latestAnswers.current).length > 0 && !hasSubmittedRef.current) {
         localStorage.setItem(
           `quiz-progress-${quizData._id}`,
@@ -60,6 +60,104 @@ const QuizEngine = () => {
     return () => clearInterval(saveInterval);
   }, [quizData?._id]);
 
+  // Define handleSubmitTest BEFORE the hooks that use it
+  const handleSubmitTest = (forceSubmit = false) => {
+    if (hasSubmittedRef.current) return;
+    hasSubmittedRef.current = true;
+    const answersToProcess = latestAnswers.current;
+
+    let correctCount = 0;
+    let incorrectCount = 0;
+
+    questionsList.forEach((question, index) => {
+      const selectedOption = answersToProcess[index];
+      if (selectedOption !== undefined) {
+        if (selectedOption === question.correct_answer) {
+          correctCount++;
+        } else {
+          incorrectCount++;
+        }
+      }
+    });
+
+    const unattemptedCount = totalQuestions - (correctCount + incorrectCount);
+    const score = correctCount * 4;
+
+    const resultData = {
+      score,
+      correctCount,
+      incorrectCount,
+      unattemptedCount,
+      totalQuestions,
+      maxScore: totalQuestions * 4,
+      userAnswers: answersToProcess,
+    };
+
+    latestAnswers.current = {}; 
+    localStorage.removeItem(`quiz-progress-${quizData?._id}`);
+    sessionStorage.setItem(`testResult-${quizData?._id}`, JSON.stringify(resultData));
+    
+    router.replace(`/test-series/${quizData?._id}/result?attempt=${Date.now()}`);
+  };
+
+  // Timer logic
+  useEffect(() => {
+    if (!quizData) return; 
+    
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          handleSubmitTest(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, [quizData]); 
+
+  // 3. Anti-cheat and Window listeners 
+  useEffect(() => {
+    if (!quizData) return;
+
+    window.history.pushState(null, "", window.location.href);
+    
+    const handlePopState = () => {
+      window.history.pushState(null, "", window.location.href);
+      if (currentIndexRef.current > 0) {
+        setCurrentIndex((prev) => prev - 1);
+      } else {
+        const leave = window.confirm("Warning: Leaving now will instantly submit your quiz. Continue?");
+        if (leave) handleSubmitTest(true);
+      }
+    };
+
+    const handleBeforeUnload = (e: any) => {
+      e.preventDefault();
+      e.returnValue = "Are you sure you want to leave?";
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden && !hasSubmittedRef.current) {
+        alert("Cheating Protection: Test auto-submitted due to tab switch!");
+        handleSubmitTest(true);
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [quizData, questionsList]); 
+
+  // 4. Loading state early return
   if (loading || !quizData || questionsList.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center font-bold text-gray-500">
@@ -92,97 +190,9 @@ const QuizEngine = () => {
     if (currentIndex > 0) setCurrentIndex(currentIndex - 1);
   };
 
-const handleSubmitTest = (forceSubmit = false) => {
-    if (hasSubmittedRef.current) return;
-    hasSubmittedRef.current = true;
-    const answersToProcess = latestAnswers.current;
-
-    let correctCount = 0;
-    let incorrectCount = 0;
-
-    questionsList.forEach((question: any, index: number) => {
-      const selectedOption = answersToProcess[index];
-      if (selectedOption !== undefined) {
-        if (selectedOption === question.correct_answer) {
-          correctCount++;
-        } else {
-          incorrectCount++;
-        }
-      }
-    });
-
-    const unattemptedCount = totalQuestions - (correctCount + incorrectCount);
-    const score = correctCount * 4;
-
-    const resultData = {
-      score,
-      correctCount,
-      incorrectCount,
-      unattemptedCount,
-      totalQuestions,
-      maxScore: totalQuestions * 4,
-      userAnswers: answersToProcess,
-    };
-
-    // FIX 1: Wipe the ref clean so background tasks have nothing to save
-    latestAnswers.current = {}; 
-    
-    // 3. Clear the saved progress so they can retake it cleanly later
-    localStorage.removeItem(`quiz-progress-${quizData._id}`);
-    
-    sessionStorage.setItem(`testResult-${quizData._id}`, JSON.stringify(resultData));
-    
-    // FIX 2: Bust the Next.js router cache by adding a unique timestamp query parameter
-    // This guarantees your ResultClient will remount and trigger the DB POST request!
-    router.replace(`/test-series/${quizData._id}/result?attempt=${Date.now()}`);
-  };
-
-  useEffect(() => {
-    if (timeLeft <= 0) {
-      handleSubmitTest(true);
-      return;
-    }
-    const timer = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
-    return () => clearInterval(timer);
-  }, [timeLeft]);
-
-  useEffect(() => {
-    window.history.pushState(null, "", window.location.href);
-    const handlePopState = () => {
-      window.history.pushState(null, "", window.location.href);
-      if (currentIndexRef.current > 0) {
-        setCurrentIndex((prev) => prev - 1);
-      } else {
-        const leave = window.confirm("Warning: Leaving now will instantly submit your quiz. Continue?");
-        if (leave) handleSubmitTest(true);
-      }
-    };
-
-    const handleBeforeUnload = (e: any) => {
-      e.preventDefault();
-      e.returnValue = "Are you sure you want to leave?";
-    };
-
-    const handleVisibilityChange = () => {
-      if (document.hidden && !hasSubmittedRef.current) {
-        alert("Cheating Protection: Test auto-submitted due to tab switch!");
-        handleSubmitTest(true);
-      }
-    };
-
-    window.addEventListener("popstate", handlePopState);
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    return () => {
-      window.removeEventListener("popstate", handlePopState);
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, []);
+  // REMOVED DUPLICATE TIMER AND EVENT LISTENER HOOKS THAT WERE PREVIOUSLY HERE
 
   return (
-    // Your UI rendering remains exactly the same here
     <section
       className="min-h-screen bg-gradient-to-br mt-2 from-slate-50 to-slate-100 pt-20 pb-12 px-4 sm:px-6 lg:px-8 select-none"
       onContextMenu={(e) => e.preventDefault()}
@@ -217,17 +227,16 @@ const handleSubmitTest = (forceSubmit = false) => {
                   {currentQuestion?.question_text}
                 </h2>
 
-                {/* NEW: Display the image if it exists for this question */}
-    {currentQuestion?.imageUrl && (
-      <div className="mt-6 flex justify-center">
-        <img 
-          src={currentQuestion.imageUrl} 
-          alt={`Question ${currentIndex + 1} illustration`} 
-          className="max-h-64 w-auto rounded-xl shadow-sm border border-slate-200 object-contain"
-        />
-      </div>
-    )}
-     </div>
+                {currentQuestion?.imageUrl && (
+                  <div className="mt-6 flex justify-center">
+                    <img 
+                      src={currentQuestion.imageUrl} 
+                      alt={`Question ${currentIndex + 1} illustration`} 
+                      className="max-h-64 w-auto rounded-xl shadow-sm border border-slate-200 object-contain"
+                    />
+                  </div>
+                )}
+              </div>
               <div className="grid grid-cols-1 gap-3 sm:gap-4 mb-10 flex-1">
                 {currentQuestion?.options?.map((opt: string, i: number) => {
                   const isSelected = selectedAnswers[currentIndex] === i;
