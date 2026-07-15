@@ -18,6 +18,7 @@ const Page = () => {
   const banners = [
     // { src: "/result/JEE/neet.jpeg", alt: "JEE Results" },
     { src: "/result/JEE/jeeResult.jpeg", alt: "Result Both 2" },
+    { src: "/result/JEE/Jee.jpeg", alt: "Result Both 3" },
     // { src: "/result/JEE/2.png", alt: "Result Both 3" },
     // { src: "/result/JEE/3.png", alt: "Result Both 4" },
     // { src: "/result/JEE/4.png", alt: "Combined Results" },

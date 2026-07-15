@@ -15,6 +15,10 @@ const Page = () => {
     { src: "/result/Neet/neet.jpeg", alt: "NEET Results" },
     { src: "/result/Neet/neetResult.jpeg", alt: "Combined Results" },
     { src: "/result/Neet/neetRanker.jpeg", alt: "NEET Rankers" },
+    { src: "/result/JEE/Jee.jpeg", alt: "Result Both 3" },
+    { src: "/result/Neet/neet1234.jpeg", alt: "Result Both 3" }, 
+    { src: "/result/Neet/neet_0123.jpeg", alt: "Result Both 3" },
+    { src: "/result/Neet/Biology_1234.jpeg", alt: "Result Both 3" },
   ];
 
   // Animation Variants

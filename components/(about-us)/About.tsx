@@ -217,7 +217,7 @@ const About = () => {
       </section>
 
       {/* ===== Contact Form Section ===== */}
-      <section className="pb-24 px-4 sm:px-6">
+      {/* <section className="pb-24 px-4 sm:px-6">
         <motion.div
           initial={{ y: 50, opacity: 0 }}
           whileInView={{ y: 0, opacity: 1 }}
@@ -260,7 +260,7 @@ const About = () => {
             </motion.button>
           </form>
         </motion.div>
-      </section>
+      </section> */}
     </main>
   );
 };
